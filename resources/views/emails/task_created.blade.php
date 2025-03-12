@@ -8,10 +8,13 @@ A new task has been created for you!
 **Description:** {{ $task->description }}  
 **Due Date:** {{ $task->due_date }}
 
-@component('mail::button', ['url' => url('/tasks/' . $task->id)])
+@component('mail::button', ['url' => route('tasks.showOneTask', ['id' => $task->id])])  
+
+
+
 View Task
 @endcomponent
- 
+
 Thanks,  
 {{ config('app.name') }}
 @endcomponent

@@ -13,24 +13,41 @@ Route::get('/', function () {
 
 
 
-Route::middleware('auth')->group(function () {
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update'); //post ya kupdate
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    Route::post('/tasks', [TaskController::class,'store'])->name('tasks.store');
-    Route::get('/creating/task', [TaskController::class,'index']);
-    Route::get('/api/task-options', [TaskController::class, 'fetchOptions']);
-    Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show');
+    Route::post('/storing/tasks', [TaskController::class,'store'])->name('tasks.store');// to create
+    Route::patch('/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update'); //to update
+
+    Route::get('/creating/task/form', [TaskController::class, 'index'])
+     ->name('creating-form'); //to display form
+
+     Route::get('/tasks/{id}/edit', [TaskController::class, 'displayUpdateForm'])->name('tasks.edit'); //accessing form ya to update one item
+
+     Route::get('viewing/all/tasks', [TaskController::class, 'viewAllTasks'])->name('viewing-all-tasks'); //listing all tasks 
+
+     Route::delete('delete/task/{id}', [TaskController::class, 'destroy'])->name('task.remove'); //deleting tasks.
+
+
+
+
+     Route::get('/tasks/{id}', [TaskController::class, 'show'])->name('tasks.showOneTask');
+
+
+    //listinga ll tasks by all users
+
+    Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show'); //listing one tasks for a user
+    
 
   
 
-    Route::delete('/delete/task', [TaskController::class, 'delete'])->name('tasks.destroy');
-    Route::get('/tasks/create', [TaskController::class, 'create'])->name('tasks.create');
+  
 
 
-    Route::get('/tasks/{id}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
-Route::patch('/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update');
+
+
 Route::get('/tasks{id}',[TaskController::class, 'list'])->name('task-mail-info');
 
 // Route::get('/tasks/details', [TaskController::class, 'list']);
@@ -41,7 +58,6 @@ Route::get('/dashboard', [TaskController::class,'index'])->name('dashboard');
 
 
     
-});
 
 
 

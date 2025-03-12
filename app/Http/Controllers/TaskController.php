@@ -13,6 +13,8 @@ use App\Models\Recurrency;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\Controller; 
+use Illuminate\Support\Facades\Storage;
+
 
 use App\Services\NovuService;
 use Carbon\Carbon;
@@ -35,16 +37,22 @@ class TaskController extends Controller
         $tasks = Task::all();
         return view('Task.task-form', compact('categories', 'completions', 'recurrencies', 'tasks'));
     }
-    public function fetchOptions()
+
+
+    public function viewAllTasks()
     { 
+
+        //listing all tasks by all users
+
           $tasks = Task::all();
           $recurrencies = Recurrency::all();
-        $completions = CompletionStatus::all();
+        $completionStatus = CompletionStatus::all();
         $categories = Category::all();
           
+        
 
 
-        return view('task-listing', compact('categories', 'completions', 'recurrencies', 'tasks'));
+        return view('Task.all-tasks-listing', compact('categories', 'completionStatus', 'recurrencies', 'tasks'));
 
         // return response()->json([
         //     'categories' => Category::all(),
@@ -348,6 +356,78 @@ class TaskController extends Controller
      */
 
 
+     
+    public function displayUpdateForm($id)
+    {
+        $task = Task::findOrFail($id);
+        $categories = Category::all();
+        $recurrencies = Recurrency::all();
+        $completions = CompletionStatus::all();
+        $tasks = Task::all();
+    
+        return view('Task.task-edit', compact('task', 'categories', 'recurrencies', 'completions', 'tasks'));
+    }
+    
+
+
+//deletng tasks kwa tasks view
+public function destroy($id)
+{
+    $task = Task::find($id);
+
+    if (!$task) {
+        return response()->json(['error' => 'Task not found.'], 404);
+    }
+
+    // Ensure the authenticated user owns the task
+    if (auth()->id() !== $task->user_id) {
+        return response()->json(['error' => 'Unauthorized action.'], 403);
+    }
+
+    try {
+        // Delete associated alerts
+        Alert::where('task_id', $task->id)->delete();
+
+        // Delete associated uploads
+        $uploads = Upload::where('task_id', $task->id)->get();
+        foreach ($uploads as $upload) {
+            if ($upload->paths) {
+                Storage::disk('public')->delete($upload->paths); // Fixed issue
+            }
+            $upload->delete();
+        }
+
+        // Delete the task
+        $task->delete();
+
+        return response()->json(['message' => 'Task deleted successfully.'], 200);
+    } catch (\Exception $e) {
+        Log::error('Task Deletion Failed:', ['error' => $e->getMessage()]);
+        return response()->json(['error' => 'Failed to delete task.'], 500);
+    }
+}
+
+
+
+
+
+//this inadisplay task as per the id.
+public function showOneTask($id)
+{
+    $task = Task::with(['category', 'recurrency', 'completionStatus', 'uploads', 'alert'])
+                ->find($id);
+
+    if (!$task) {
+        return response()->json(['error' => 'Task not found'], 404);
+    }
+
+    return view('Task.task-details', compact('task'));
+}
+
+
+
+
+
 
      public function list()
     {
@@ -358,7 +438,7 @@ class TaskController extends Controller
 
         return request()->expectsJson()
             ? response()->json(['tasks' => $tasks], 200)
-            : view('Task.task-listing', compact('tasks'));
+            : view('Task.task-details', compact('tasks'));
     } catch (\Exception $e) {
         Log::error('Error retrieving tasks:', ['error' => $e->getMessage()]);
 
@@ -368,60 +448,9 @@ class TaskController extends Controller
     }
     }
 
-    public function TaskList(){
-        $tasks = Task::all();
-        return view('Task.task-listing', compact('tasks'));
-    }
+    
 
      
-
-
-
-    // public function sendTaskCreatedNotification($task ,NovuService $novuService){
-
-    //     try{
-    //         $user = auth()->user();
-    //         $novuService->triggerEvent('task-created', [
-    //             'to'=>[
-    //                 'subscriberId'=>(string) $user ->id,
-    //                 'email' => $user ->email,
-    //                 'phone'=> $user->phone_number ?? null,
-    //             ],
-
-    //             'payload' =>[
-    //                 'task_name' => $task ->name,
-    //                 'task_description'=> $task->description,
-    //                 'task_due_date' => $task -> due_date,
-    //                 'task_alert_date' => $task->alert_date,
-    //                 'task_cost' => $task->cost,
-    //                 'dashboard_url' => url('/tasks/' .$task->id),
-    //             ],
-    //         ]);
-    //     }
-
-    //     catch (\Exception $e) {
-    //         Log::error('Failed to send task creation notification:', [
-    //             'error' => $e->getMessage(),
-    //             'task_id' => $task->id,
-    //         ]);
-    //     }
-    // }
-
-
-    // public function scheduleAlertNotification($task){
-    //     $alertDate = Carbon::parse($task->alert_date);
-
-
-    //     // we will schedule if the alert is in the future.
-
-    //     if ($alertDate->isFuture()) {
-    //         $user = auth()->user();
-            
-    //         // Dispatch job to send alert at the specified time
-    //         SendTaskAlertNotification::dispatch($task, $user)
-    //             ->delay($alertDate);
-    //     }
-    // }
 
 
     protected function scheduleAlertNotification(Task $task)
@@ -436,42 +465,32 @@ class TaskController extends Controller
     }
 
 
-
-    public function show(Task $task)
+    public function show($id)
     {
-    try {
-        // Ensure the logged-in user owns the task
-        if ($task->user_id !== auth()->id()) {
-            return abort(403, 'Unauthorized action.');
+        try {
+            // Find the task by ID
+            $task = Task::findOrFail($id);
+            
+            // Ensure the logged-in user owns the task
+            if ($task->user_id !== auth()->id()) {
+                return abort(403, 'Unauthorized action.');
+            }
+    
+            // Fetch all tasks created by the logged-in user
+            $userTasks = Task::where('user_id', auth()->id())->get();
+    
+            return request()->expectsJson()
+                ? response()->json(['task' => $task, 'user_tasks' => $userTasks], 200)
+                : view('task-details', compact('task', 'userTasks'));
+        } catch (\Exception $e) {
+            Log::error('Error retrieving task details:', ['error' => $e->getMessage()]);
+    
+            return request()->expectsJson()
+                ? response()->json(['error' => 'Failed to retrieve task details.'], 500)
+                : redirect()->back()->with('error', 'Failed to retrieve task details.');
         }
-
-        // Fetch all tasks created by the logged-in user
-        $userTasks = Task::where('user_id', auth()->id())->get();
-
-        return request()->expectsJson()
-            ? response()->json(['task' => $task, 'user_tasks' => $userTasks], 200)
-            : view('task-details', compact('task', 'userTasks'));
-    } catch (\Exception $e) {
-        Log::error('Error retrieving task details:', ['error' => $e->getMessage()]);
-
-        return request()->expectsJson()
-            ? response()->json(['error' => 'Failed to retrieve task details.'], 500)
-            : redirect()->back()->with('error', 'Failed to retrieve task details.');
-    }
-    
     }
 
-    public function edit($id)
-    {
-        $task = Task::findOrFail($id);
-        $categories = Category::all();
-        $recurrencies = Recurrency::all();
-        $completions = CompletionStatus::all();
-        $tasks = Task::all();
-    
-        return view('userfolder.task-edit', compact('task', 'categories', 'recurrencies', 'completions', 'tasks'));
-    }
-    
     
 
 
