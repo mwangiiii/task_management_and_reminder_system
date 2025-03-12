@@ -26,7 +26,7 @@ class Task extends Model
         'due_date',
         'user_id',
         'parent_task_id',
-        'alert_sent',
+        
         
     ];
 

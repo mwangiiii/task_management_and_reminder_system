@@ -33,7 +33,7 @@ class TaskController extends Controller
         $recurrencies = Recurrency::all();
         $completions = CompletionStatus::all();
         $tasks = Task::all();
-        return view('userfolder.task-form', compact('categories', 'completions', 'recurrencies', 'tasks'));
+        return view('Task.task-form', compact('categories', 'completions', 'recurrencies', 'tasks'));
     }
     public function fetchOptions()
     { 
@@ -54,7 +54,7 @@ class TaskController extends Controller
         // ]);
     }
     
-    public function store(Request $request, NovuService $novuService)
+    public function store(Request $request)
     {
         $user_id = auth()->id();
         try {
@@ -133,12 +133,13 @@ class TaskController extends Controller
             'due_date' => $validated_task_data['task_due_date'],
             'parent_task_id' => $validated_task_data['parent_task_id'] ?? null,
             'user_id' => $validated_task_data['user_id'],
-            'alert_sent' => false,
+            
         ]);
 
         $alert = Alert::create([
             'time_of_alert' => $validated_task_data['task_alert'],
             'task_id' => $task->id,
+            'alert_sent' => false,
         ]);
         
     
@@ -357,7 +358,7 @@ class TaskController extends Controller
 
         return request()->expectsJson()
             ? response()->json(['tasks' => $tasks], 200)
-            : view('task-listing', compact('tasks'));
+            : view('Task.task-listing', compact('tasks'));
     } catch (\Exception $e) {
         Log::error('Error retrieving tasks:', ['error' => $e->getMessage()]);
 
@@ -365,6 +366,11 @@ class TaskController extends Controller
             ? response()->json(['error' => 'Failed to retrieve tasks.'], 500)
             : redirect()->back()->with('error', 'Failed to retrieve tasks.');
     }
+    }
+
+    public function TaskList(){
+        $tasks = Task::all();
+        return view('Task.task-listing', compact('tasks'));
     }
 
      

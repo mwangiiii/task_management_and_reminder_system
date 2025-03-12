@@ -14,6 +14,7 @@ class Alert extends Model
     protected $fillable=[
         'time_of_alert',
         'task_id',
+        'alert_sent',
     ];
     protected $table= 'alerts';
 

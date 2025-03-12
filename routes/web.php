@@ -9,12 +9,8 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// Route::get('/dashboard', function () {
-//     // return view('dashboard');
-//     return view('userfolder.task-form');
-// })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('/dashboard', [TaskController::class,'index'])->name('dashboard');
+
 
 
 Route::middleware('auth')->group(function () {
@@ -35,13 +31,22 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/tasks/{id}/edit', [TaskController::class, 'edit'])->name('tasks.edit');
 Route::patch('/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update');
+Route::get('/tasks{id}',[TaskController::class, 'list'])->name('task-mail-info');
 
-Route::get('/task/details', [TaskController::class, 'list']);
+// Route::get('/tasks/details', [TaskController::class, 'list']);
 
+
+Route::get('/dashboard', [TaskController::class,'index'])->name('dashboard');
 
 
 
     
 });
+
+
+
+
+
+Route::get('/test-route',  [TaskController::class,'index']);
 
 require __DIR__.'/auth.php';
