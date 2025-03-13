@@ -19,7 +19,7 @@ Route::get('/', function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     Route::post('/storing/tasks', [TaskController::class,'store'])->name('tasks.store');// to create
-    Route::patch('/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update'); //to update
+    Route::patch('/update/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update'); //to update
 
     Route::get('/creating/task/form', [TaskController::class, 'index'])
      ->name('creating-form'); //to display form
@@ -33,7 +33,11 @@ Route::get('/', function () {
 
 
 
-     Route::get('/tasks/{id}', [TaskController::class, 'show'])->name('tasks.showOneTask');
+     Route::get('/tasks/{parentTaskId}/create-child', [TaskController::class, 'createChild'])
+     ->name('tasks.createChild');
+
+     Route::get('/view/tasks/{id}', [TaskController::class, 'showOneTask'])->name('tasks.showOneTask');
+
 
 
     //listinga ll tasks by all users
@@ -53,7 +57,7 @@ Route::get('/tasks{id}',[TaskController::class, 'list'])->name('task-mail-info')
 // Route::get('/tasks/details', [TaskController::class, 'list']);
 
 
-Route::get('/dashboard', [TaskController::class,'index'])->name('dashboard');
+Route::get('/dashboard/create/task', [TaskController::class,'index'])->name('dashboard');
 
 
 

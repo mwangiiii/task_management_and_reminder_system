@@ -26,7 +26,7 @@ class Task extends Model
         'due_date',
         'user_id',
         'parent_task_id',
-        
+        'deleted',
         
     ];
 
@@ -41,7 +41,7 @@ class Task extends Model
     }
 
 
-    public function completion_status(){
+    public function completionStatus(){
         return $this->belongsTo(CompletionStatus::class);
     }
 
@@ -53,7 +53,7 @@ class Task extends Model
         return $this->belongsTo(Recurrency::class);
     }
 
-    public function upload(){
+    public function uploads(){
         return $this->hasMany(Upload::class);
     }
 

@@ -9,9 +9,53 @@
         .gradient-header {
             background: linear-gradient(to right, #3b82f6, #4f46e5);
         }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 8px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 md:p-8">
+    <!-- Notification Section -->
+    @if(session('success'))
+        <div id="notification" class="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg flex items-center justify-between">
+            <span>{{ session('success') }}</span>
+            <button onclick="document.getElementById('notification').style.display = 'none';" class="ml-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    @endif
+
     <div class="w-full max-w-4xl shadow-lg rounded-lg bg-white">
         <div class="space-y-1 gradient-header text-white rounded-t-lg p-6">
             <h3 class="text-2xl font-bold tracking-tight text-center">Edit Task</h3>
@@ -104,22 +148,32 @@
                         />
                     </div>
 
-                    <!-- Alert -->
-                    <div class="space-y-2">
-                        <label for="task_alert" class="text-sm font-medium flex items-center">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                            </svg>
-                            Alert
-                        </label>
-                        <input
-                            id="task_alert"
-                            name="task_alert"
-                            type="datetime-local"
-                            value="{{ old('task_alert', $task->alert) }}"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        />
-                    </div>
+                   <!-- Alert -->
+<div class="space-y-2">
+    <label for="task_alert" class="text-sm font-medium flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        Alert
+    </label>
+    <div id="alerts-container" class="space-y-2">
+        @if($task->alerts)
+            @foreach($task->alerts as $alert)
+                <input
+                    type="datetime-local"
+                    name="task_alerts[]"
+                    value="{{ $alert }}"
+                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+            @endforeach
+        @else
+            <!-- If no alerts exist, you can optionally add a placeholder or leave this empty -->
+        @endif
+    </div>
+    <button type="button" onclick="openModal()" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+        Add Alert
+    </button>
+</div>
 
                     <!-- Cost -->
                     <div class="space-y-2">
@@ -146,18 +200,34 @@
                         <label for="parent_task_id" class="text-sm font-medium">
                             Parent Task
                         </label>
-                        <select
-                            id="parent_task_id"
-                            name="parent_task_id"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        >
-                            <option value="">No Parent (Main Task)</option>
-                            @foreach($tasks as $parent_task)
-                                <option value="{{ $parent_task->id }}" {{ $task->parent_task_id == $parent_task->id ? 'selected' : '' }}>
-                                    {{ $parent_task->name }}
-                                </option>
-                            @endforeach
-                        </select>
+                        @if($task->parent_task_id)
+                            <input
+                                type="text"
+                                value="{{ optional($task->parentTask)->name }}"
+                                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-gray-100 cursor-not-allowed"
+                                readonly
+                            />
+                            <input
+                                type="hidden"
+                                name="parent_task_id"
+                                value="{{ $task->parent_task_id }}"
+                            />
+                        @else
+                            <select
+                                id="parent_task_id"
+                                name="parent_task_id"
+                                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            >
+                                <option value="">No Parent (Main Task)</option>
+                                @foreach($tasks as $parent_task)
+                                    @if(!$parent_task->parent_task_id)
+                                        <option value="{{ $parent_task->id }}" {{ $task->parent_task_id == $parent_task->id ? 'selected' : '' }}>
+                                            {{ $parent_task->name }}
+                                        </option>
+                                    @endif
+                                @endforeach
+                            </select>
+                        @endif
                     </div>
 
                     <!-- Budget -->
@@ -224,11 +294,59 @@
         </div>
     </div>
 
+    <!-- Modal for adding alerts -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <h2 class="text-lg font-bold mb-4">Add Alert</h2>
+            <input
+                id="newAlert"
+                type="datetime-local"
+                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <button 
+                type="button" 
+                onclick="addAlert()" 
+                class="w-full mt-4 gradient-header hover:bg-blue-600 text-white font-medium py-2 px-4 rounded"
+            >
+                Add Alert
+            </button>
+        </div>
+    </div>
+
     <script>
-        // You can add any JavaScript here if needed
+        // Auto-hide the notification after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Form loaded successfully');
+            const notification = document.getElementById('notification');
+            if (notification) {
+                setTimeout(() => {
+                    notification.style.display = 'none';
+                }, 5000); // 5 seconds
+            }
         });
+
+        // Modal functions
+        function openModal() {
+            document.getElementById('alertModal').style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('alertModal').style.display = 'none';
+        }
+
+        function addAlert() {
+            const newAlert = document.getElementById('newAlert').value;
+            if (newAlert) {
+                const alertsContainer = document.getElementById('alerts-container');
+                const newAlertInput = document.createElement('input');
+                newAlertInput.type = 'datetime-local';
+                newAlertInput.name = 'task_alerts[]';
+                newAlertInput.value = newAlert;
+                newAlertInput.className = 'w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500';
+                alertsContainer.appendChild(newAlertInput);
+                closeModal();
+            }
+        }
     </script>
 </body>
 </html>

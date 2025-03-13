@@ -348,18 +348,16 @@
                 <table class="task-table">
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Status</th>
-                            <th>Budget / Cost</th>
-                            <th>Due Date</th>
-                            <th>Actions</th>
+                            <th>Name:</th>
+                            <th>Status:</th>
+                            <th>Budget: / Cost</th>
+                            <th>Due Date: </th>
+                            <th>Actions: </th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($tasks as $task)
                             <tr class="task-row" data-id="{{ $task->id }}">
-                                <td>{{ $task->id }}</td>
                                 <td class="truncate">{{ $task->name }}</td>
                                 <td>
                                     @php
@@ -372,15 +370,20 @@
                                 <td>${{ number_format($task->budget, 2) }} / ${{ number_format($task->cost, 2) }}</td>
                                 <td>{{ \Carbon\Carbon::parse($task->due_date)->format('M d, Y') }}</td>
                                 <td class="actions">
-                                    <button class="btn btn-secondary btn-sm view-task-btn" data-id="{{ $task->id }}">
-                                        <i class="fas fa-eye"></i> View
-                                    </button>
+                                    <a href="{{ route('tasks.showOneTask', ['id' => $task->id]) }}">
+                                        <button class="btn btn-secondary btn-sm view-task-btn" data-id="{{ $task->id }}">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    </a>
                                     <a href="{{ route('tasks.edit', $task->id) }}" class="btn btn-primary btn-sm">
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
                                     <button class="btn btn-danger btn-sm delete-btn" data-id="{{ $task->id }}" data-name="{{ $task->name }}">
                                         <i class="fas fa-trash"></i>
                                     </button>
+                                    <a href="{{ route('tasks.createChild', ['parentTaskId' => $task->id]) }}" class="btn btn-primary btn-sm">
+    <i class="fas fa-plus"></i> Add Child
+</a>
                                 </td>
                             </tr>
                         @endforeach
@@ -583,6 +586,17 @@
                 successToast.classList.remove('active');
             }, 4000);
         }
+
+        // Add Child Task Button Functionality
+         // Add Child Task Button Functionality
+         const addChildButtons = document.querySelectorAll('.add-child-btn');
+        addChildButtons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const taskId = button.getAttribute('data-id');
+                // Redirect to the edit route for creating a child task
+                window.location.href = "{{ route('tasks.createChild', '') }}" + taskId;
+            });
     </script>
 </body>
 </html>

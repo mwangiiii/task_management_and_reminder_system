@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Task</title>
+    <title>Create Child Task</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -220,9 +220,9 @@
 </head>
 <body>
     <div class="card">
-        <h1>{{ isset($parentTask) ? 'Create Child Task' : 'Create New Task' }}</h1>
+        <h1>Create Child Task</h1>
         
-        <form method="POST" action="{{ isset($parentTask) ? route('tasks.storeChild', $parentTask->id) : route('tasks.store') }}" enctype="multipart/form-data">
+        <form method="POST" action="{{ route('tasks.store', $parentTask->id) }}" enctype="multipart/form-data">
             @csrf
             
             <div class="form-grid">
@@ -272,11 +272,6 @@
                     <input type="number" id="task_cost" name="task_cost" min="0" step="0.01" class="form-control" required>
                 </div>
                 
-                <div class="form-group" id="budget_container" style="{{ isset($parentTask) ? 'display: none;' : 'display: block;' }}">
-                    <label for="budget">Budget</label>
-                    <input type="number" id="budget" name="budget" min="0" step="0.01" class="form-control" {{ isset($parentTask) ? '' : 'required' }}>
-                </div>
-                
                 <div class="form-group">
                     <label for="task_completion_status">Status</label>
                     <select id="task_completion_status" name="task_completion_status" class="form-control" required>
@@ -297,7 +292,12 @@
                     </select>
                 </div>
                 
-                
+                <!-- Parent Task Field (Automatically Embedded) -->
+                <input type="hidden" name="parent_task_id" value="{{ $parentTask->id }}">
+                <div class="form-group">
+                    <label for="parent_task">Parent Task</label>
+                    <input type="text" id="parent_task" class="form-control" value="{{ $parentTask->name }}" disabled>
+                </div>
                 
                 <div class="form-group">
                     <label for="task_uploads">Uploads</label>
@@ -316,13 +316,11 @@
             
             <div class="form-footer">
                 <button type="submit" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> {{ isset($parentTask) ? 'Create Child Task' : 'Create Task' }}
+                    <i class="fas fa-plus"></i> Create Child Task
                 </button>
-                <a href="{{ route('viewing-all-tasks') }}">
-                <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+                <a href="{{ route('viewing-all-tasks') }}" class="btn btn-secondary">
                     <i class="fas fa-arrow-left"></i> Go Back
-                </button>
-    </a>
+                </a>
             </div>
         </form>
     </div>
@@ -380,28 +378,12 @@
             const now = new Date().toISOString().slice(0, 16);
             const startDateInput = document.getElementById("start_date");
             const dueDateInput = document.getElementById("due_date");
-            const parentTaskSelect = document.getElementById("parent_task");
-            const budgetField = document.getElementById("budget");
-            const budgetContainer = document.getElementById("budget_container");
 
             startDateInput.min = now;
 
             startDateInput.addEventListener("change", function () {
                 dueDateInput.min = startDateInput.value;
             });
-
-            if (parentTaskSelect) {
-                parentTaskSelect.addEventListener("change", function () {
-                    if (parentTaskSelect.value) {
-                        budgetContainer.style.display = "none";
-                        budgetField.value = "";
-                        budgetField.required = false;
-                    } else {
-                        budgetContainer.style.display = "block";
-                        budgetField.required = true;
-                    }
-                });
-            }
         });
     </script>
 </body>
