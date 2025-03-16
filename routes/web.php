@@ -30,6 +30,23 @@ Route::get('/', function () {
 
      Route::delete('delete/task/{id}', [TaskController::class, 'destroy'])->name('task.remove'); //deleting tasks.
 
+    //  Route::delete('delete/task/{id}', [TaskController::class, 'destroy'])->name('task.remove');
+
+    Route::post('/tasks/{id}/revive', [TaskController::class, 'revive'])->name('tasks.revive');
+
+// Routes for filtering tasks
+Route::post('/tasks/filter-by-date', [App\Http\Controllers\TaskController::class, 'searchTask'])->name('tasks.filterByDate');
+Route::post('/tasks/filter-by-status', [App\Http\Controllers\TaskController::class, 'searchTask'])->name('tasks.filterByStatus');
+Route::post('/tasks/search-by-name', [App\Http\Controllers\TaskController::class, 'searchTask'])->name('tasks.searchByName');
+
+Route::post('/tasks/{parentTaskId}/update-budget', [TaskController::class, 'updateBudget'])
+    ->name('user-updating-budget');
+
+
+    Route::delete('/tasks/{id}/delete-child-tasks', [TaskController::class, 'deleteChildTasks'])->name('delete-child-tasks');
+    Route::get('/tasks/filter', [TaskController::class, 'filterTasks'])->name('tasks.filter');
+
+
 
 
 
@@ -43,6 +60,7 @@ Route::get('/', function () {
     //listinga ll tasks by all users
 
     Route::get('/tasks/{task}', [TaskController::class, 'show'])->name('tasks.show'); //listing one tasks for a user
+    Route::get('/show/completed/tasks', [TaskController::class, 'completedTasks'])->name('showing-completed-tasks');
     
 
   

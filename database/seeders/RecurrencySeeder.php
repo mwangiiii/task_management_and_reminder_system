@@ -14,6 +14,7 @@ class RecurrencySeeder extends Seeder
     public function run(): void
     {
         $frequencies = [
+            ['frequency' => 'Once'],
             ['frequency' => 'hourly'],
             ['frequency'=> 'daily'],
             ['frequency' => 'monthly'],

@@ -5,177 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task Details</title>
     <style>
-        /* Your existing CSS styles remain unchanged */
+        :root {
+            --primary: #4f46e5;
+            --secondary: #f9fafb;
+            --accent: #818cf8;
+            --text: #1f2937;
+            --text-light: #6b7280;
+            --border: #e5e7eb;
+            --bg: #ffffff;
+            --bg-subtle: #f3f4f6;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --radius: 8px;
+            --shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-            background: linear-gradient(135deg, #f0f4ff 0%, #f5f0ff 100%);
-            color: #333;
-            min-height: 100vh;
-            line-height: 1.6;
-            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='rgb(255 255 255 / 0.1)'%3e%3cpath d='M0 .5H31.5V32'/%3e%3c/svg%3e");
+            font-family: 'Inter', sans-serif;
+            color: var(--text);
+            background-color: var(--secondary);
+            line-height: 1.5;
         }
-        
-        a {
-            text-decoration: none;
-            color: inherit;
-        }
-        
-        /* Animations and transitions */
-        .task-card {
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-        
-        .task-card:hover {
-            transform: translateY(-5px);
-        }
-        
-        .status-badge {
-            transition: all 0.3s ease;
-        }
-        
-        .status-badge:hover {
-            transform: scale(1.05);
-        }
-        
-        .floating-label {
-            opacity: 0;
-            transform: translateY(10px);
-            transition: all 0.3s ease;
-        }
-        
-        .task-field:hover .floating-label {
-            opacity: 1;
-            transform: translateY(0);
-        }
-        
-        .task-actions button, .task-actions a {
-            transition: all 0.2s ease;
-        }
-        
-        .task-actions button:hover, .task-actions a:hover {
-            transform: translateY(-2px);
-        }
-        
-        /* Modal styles */
-        .modal {
-            opacity: 0;
-            visibility: hidden;
-            transition: all 0.3s ease;
-            position: fixed;
-            inset: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 50;
-            background-color: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-        }
-        
-        .modal.active {
-            opacity: 1;
-            visibility: visible;
-        }
-        
-        .modal-content {
-            transform: translateY(20px);
-            transition: all 0.3s ease;
-            background-color: white;
-            border-radius: 1rem;
-            overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            max-width: 28rem;
-            width: 100%;
-            margin: 0 1rem;
-        }
-        
-        .modal.active .modal-content {
-            transform: translateY(0);
-        }
-        
-        /* Priority indicators */
-        .priority-indicator {
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            width: 18px;
-            height: 18px;
-            border-radius: 50%;
-            border: 2px solid white;
-        }
-        
-        .priority-high {
-            background-color: #ef4444;
-        }
-        
-        .priority-medium {
-            background-color: #f59e0b;
-        }
-        
-        .priority-low {
-            background-color: #10b981;
-        }
-        
-        /* Layout */
+
         .container {
-            min-height: 100vh;
-            padding: 3rem 1rem;
-            background: linear-gradient(135deg, rgba(79, 70, 229, 0.05) 0%, rgba(147, 51, 234, 0.05) 100%);
-        }
-        
-        .content-wrapper {
-            max-width: 64rem;
+            max-width: 1200px;
             margin: 0 auto;
+            padding: 2rem;
         }
-        
-        /* Toast */
-        #success-toast {
-            position: fixed;
-            top: 1rem;
-            right: 1rem;
-            background-color: #10b981;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            z-index: 50;
-            animation: fadeInDown 0.5s ease forwards;
-        }
-        
-        @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-1rem);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        /* Card and content */
+
         .task-card {
-            backdrop-filter: blur(16px);
-            background-color: rgba(255, 255, 255, 0.9);
-            border-radius: 1rem;
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: var(--bg);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
             overflow: hidden;
         }
-        
+
         .card-header {
-            background: linear-gradient(to right, #4f46e5, #9333ea);
+            background: linear-gradient(to right, var(--primary), #9333ea);
             padding: 1.5rem;
+            color: white;
         }
-        
+
         .breadcrumbs {
             display: flex;
             align-items: center;
@@ -184,18 +61,18 @@
             font-size: 0.875rem;
             margin-bottom: 0.75rem;
         }
-        
+
         .breadcrumbs a:hover {
             color: white;
             transition: color 0.2s;
         }
-        
+
         .header-content {
             display: flex;
             flex-direction: column;
             gap: 1rem;
         }
-        
+
         @media (min-width: 640px) {
             .header-content {
                 flex-direction: row;
@@ -203,167 +80,167 @@
                 justify-content: space-between;
             }
         }
-        
+
         .title-section {
             display: flex;
             align-items: center;
             gap: 1rem;
         }
-        
+
         .back-button {
             border-radius: 9999px;
             padding: 0.5rem;
             transition: background-color 0.2s;
         }
-        
+
         .back-button:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
-        
+
         .task-title {
             font-size: 1.875rem;
             font-weight: 700;
             color: white;
             letter-spacing: -0.025em;
         }
-        
+
         @media (min-width: 640px) {
             .task-title {
                 font-size: 1.5rem;
             }
         }
-        
+
         .status-actions {
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
-        
+
         .status-badge {
             padding: 0.25rem 0.75rem;
             border-radius: 9999px;
             font-size: 0.75rem;
             font-weight: 500;
         }
-        
+
         .status-completed {
             background-color: rgba(16, 185, 129, 0.2);
             color: #34d399;
         }
-        
+
         .status-in-progress {
             background-color: rgba(59, 130, 246, 0.2);
             color: #60a5fa;
         }
-        
+
         .status-pending {
             background-color: rgba(245, 158, 11, 0.2);
             color: #fbbf24;
         }
-        
+
         .dropdown {
             position: relative;
         }
-        
+
         .dropdown-menu {
             position: absolute;
             right: 0;
             margin-top: 0.5rem;
             width: 12rem;
             background-color: white;
-            border-radius: 0.375rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
             padding: 0.25rem 0;
             z-index: 10;
             display: none;
         }
-        
+
         .dropdown-menu.show {
             display: block;
         }
-        
+
         .dropdown-item {
             display: block;
             padding: 0.5rem 1rem;
             font-size: 0.875rem;
-            color: #374151;
+            color: var(--text);
             transition: background-color 0.2s;
         }
-        
+
         .dropdown-item:hover {
-            background-color: #f3f4f6;
+            background-color: var(--bg-subtle);
         }
-        
+
         .dropdown-item.danger {
-            color: #dc2626;
+            color: var(--danger);
         }
-        
+
         .card-body {
             padding: 1.5rem 2rem;
         }
-        
+
         .task-details-grid {
             display: grid;
             gap: 1.5rem;
             margin-bottom: 2rem;
         }
-        
+
         @media (min-width: 640px) {
             .task-details-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
         }
-        
+
         .task-field {
             position: relative;
             padding: 1.25rem;
-            border-radius: 0.75rem;
-            background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+            border-radius: var(--radius);
+            background: linear-gradient(135deg, var(--bg-subtle) 0%, var(--bg) 100%);
             transition: transform 0.3s ease;
         }
-        
+
         .task-field:hover {
             transform: translateY(-2px);
         }
-        
+
         .task-field-label {
             font-size: 0.875rem;
             font-weight: 500;
-            color: #6b7280;
+            color: var(--text-light);
             margin-bottom: 0.25rem;
         }
-        
+
         .task-field-value {
             display: flex;
             align-items: center;
             font-size: 1.125rem;
             font-weight: 600;
-            color: #111827;
+            color: var(--text);
         }
-        
+
         .task-field-value svg {
             margin-right: 0.5rem;
             flex-shrink: 0;
         }
-        
+
         .task-field-value svg path {
-            stroke: #6366f1;
+            stroke: var(--primary);
         }
-        
+
         .task-field-hint {
             font-size: 0.75rem;
-            color: #6b7280;
+            color: var(--text-light);
             margin-top: 0.25rem;
         }
-        
+
         .task-field-hint.overdue {
-            color: #ef4444;
+            color: var(--danger);
         }
-        
+
         .task-description {
             grid-column: span 2;
         }
-        
+
         .priority-indicator-inline {
             display: inline-block;
             width: 0.75rem;
@@ -371,24 +248,24 @@
             border-radius: 9999px;
             margin-right: 0.5rem;
         }
-        
+
         .priority-high-inline {
-            background-color: #ef4444;
+            background-color: var(--danger);
         }
-        
+
         .priority-medium-inline {
-            background-color: #f59e0b;
+            background-color: var(--warning);
         }
-        
+
         .priority-low-inline {
-            background-color: #10b981;
+            background-color: var(--success);
         }
-        
+
         .avatar {
             width: 2rem;
             height: 2rem;
             border-radius: 9999px;
-            background-color: #6366f1;
+            background-color: var(--primary);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -396,7 +273,7 @@
             font-weight: 500;
             margin-right: 0.75rem;
         }
-        
+
         .task-actions {
             display: flex;
             flex-wrap: wrap;
@@ -405,196 +282,196 @@
             align-items: center;
             margin-top: 2rem;
             padding-top: 1.5rem;
-            border-top: 1px solid #e5e7eb;
+            border-top: 1px solid var(--border);
         }
-        
+
         .action-buttons {
             display: flex;
             flex-wrap: wrap;
             gap: 0.75rem;
         }
-        
+
         .btn {
             display: inline-flex;
             align-items: center;
             padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
+            border-radius: var(--radius);
             font-weight: 500;
-            font-size: 0.875rem;
-            transition: all 0.2s;
             cursor: pointer;
+            transition: all 0.2s;
+            text-decoration: none;
             border: none;
         }
-        
-        .btn svg {
-            width: 1rem;
-            height: 1rem;
-            margin-right: 0.5rem;
-        }
-        
-        .btn-outline-primary {
-            border: 1px solid #6366f1;
-            color: #6366f1;
-        }
-        
-        .btn-outline-primary:hover {
-            background-color: rgba(99, 102, 241, 0.05);
-        }
-        
-        .btn-outline-success {
-            border: 1px solid #10b981;
-            color: #10b981;
-        }
-        
-        .btn-outline-success:hover {
-            background-color: rgba(16, 185, 129, 0.05);
-        }
-        
+
         .btn-primary {
-            background: linear-gradient(to right, #4f46e5, #9333ea);
+            background-color: var(--primary);
             color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 0.75rem;
-            font-weight: 600;
-            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.25);
         }
-        
+
         .btn-primary:hover {
-            background: linear-gradient(to right, #4338ca, #7e22ce);
+            background-color: #4338ca;
         }
-        
-        /* Modal specific styles */
-        .modal-header {
-            padding: 1.5rem;
+
+        .btn-danger {
+            background-color: var(--danger);
             color: white;
         }
-        
-        .modal-header-user {
-            background: linear-gradient(to right, #4f46e5, #9333ea);
-        }
-        
-        .modal-header-delete {
+
+        .btn-danger:hover {
             background-color: #dc2626;
         }
-        
-        .modal-header-title {
-            display: flex;
+
+        .btn-secondary {
+            background-color: var(--bg-subtle);
+            color: var(--text);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border);
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .btn i {
+            margin-right: 0.5rem;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.4);
             align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: var(--bg);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .modal.active .modal-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
             justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 1px solid var(--border);
         }
-        
-        .modal-header-title h3 {
+
+        .modal-title {
             font-size: 1.25rem;
-            font-weight: 700;
+            font-weight: 600;
+            color: var(--text);
         }
-        
-        .modal-close-btn {
-            padding: 0.25rem;
-            border-radius: 9999px;
-            transition: background-color 0.2s;
+
+        .modal-close {
             background: none;
             border: none;
             cursor: pointer;
-            color: white;
+            font-size: 1.25rem;
+            color: var(--text-light);
         }
-        
-        .modal-close-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-        
+
         .modal-body {
-            padding: 1.5rem;
-        }
-        
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
             margin-bottom: 1.5rem;
         }
-        
-        .user-avatar-large {
-            width: 4rem;
-            height: 4rem;
-            border-radius: 9999px;
-            background-color: #6366f1;
+
+        .detail-row {
             display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-size: 1.5rem;
-            font-weight: 700;
+            margin-bottom: 0.75rem;
         }
-        
-        .user-details h4 {
-            font-size: 1.25rem;
-            font-weight: 600;
-            color: #111827;
-            margin-bottom: 0.25rem;
+
+        .detail-label {
+            flex: 0 0 120px;
+            font-weight: 500;
+            color: var(--text-light);
         }
-        
-        .user-details p {
-            color: #6b7280;
+
+        .detail-value {
+            flex: 1;
+            color: var(--text);
         }
-        
-        .user-meta {
-            margin-bottom: 2rem;
-        }
-        
-        .user-meta-item {
-            margin-top: 1rem;
-            padding-top: 1rem;
-            border-top: 1px solid #e5e7eb;
-        }
-        
-        .user-meta-item:first-child {
-            margin-top: 0;
-            padding-top: 0;
-            border-top: none;
-        }
-        
+
         .modal-footer {
             display: flex;
-            justify-content: space-between;
-            margin-top: 2rem;
-        }
-        
-        .btn-subtle {
-            color: #6366f1;
-            transition: background-color 0.2s;
-        }
-        
-        .btn-subtle:hover {
-            background-color: rgba(99, 102, 241, 0.05);
-        }
-        
-        .btn-secondary {
-            background-color: #e5e7eb;
-            color: #374151;
-        }
-        
-        .btn-secondary:hover {
-            background-color: #d1d5db;
-        }
-        
-        .btn-danger {
-            background-color: #dc2626;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background-color: #b91c1c;
-        }
-        
-        .delete-warning {
-            color: #4b5563;
-            margin-bottom: 1.5rem;
-        }
-        
-        .delete-actions {
-            display: flex;
             justify-content: flex-end;
-            gap: 1rem;
+            gap: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .toast {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: var(--bg);
+            border-left: 4px solid var(--success);
+            padding: 1rem;
+            box-shadow: var(--shadow);
+            border-radius: 0.25rem;
+            z-index: 1001;
+            display: flex;
+            align-items: center;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+        }
+
+        .toast.active {
+            transform: translateX(0);
+        }
+
+        .toast i {
+            margin-right: 0.75rem;
+            font-size: 1rem;
+            color: var(--success);
+        }
+
+        .toast-message {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .truncate {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 200px;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .task-details-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .task-description {
+                grid-column: span 1;
+            }
         }
     </style>
 </head>
@@ -728,6 +605,33 @@
                                     </ul>
                                 @else
                                     <p>No uploads available for this task.</p>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+ <!-- Child Tasks Section -->
+ <div class="task-field task-description">
+                            <div class="task-field-label">Child Tasks</div>
+                            <div class="task-field-value" style="display: block; margin-top: 0.5rem;">
+                                @if($task->childTasks->count() > 0)
+                                    <ul>
+                                        @foreach($task->childTasks as $childTask)
+                                            <li>
+                                                <a href="{{ route('tasks.show', $childTask->id) }}">{{ $childTask->name }}</a>
+                                                @if($childTask->childTasks->count() > 0)
+                                                    <ul>
+                                                        @foreach($childTask->childTasks as $subTask)
+                                                            <li>
+                                                                <a href="{{ route('tasks.show', $subTask->id) }}">{{ $subTask->name }}</a>
+                                                            </li>
+                                                        @endforeach
+                                                    </ul>
+                                                @endif
+                                            </li>
+                                        @endforeach
+                                    </ul>
+                                @else
+                                    <p>No child tasks available for this task.</p>
                                 @endif
                             </div>
                         </div>
