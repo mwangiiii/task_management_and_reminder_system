@@ -216,6 +216,33 @@
                 padding: 20px;
             }
         }
+    /* Styling for loading overlay */
+    #loadingOverlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        z-index: 9999;
+    }
+    .spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid #3498db;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
     </style>
 </head>
 <body>
@@ -248,7 +275,7 @@
                 
                 <div class="form-group">
                     <label for="start_date">Start Date</label>
-                    <input type="datetime-local" id="start_date" name="task_start_date" class="form-control" required>
+                    <input type="datetime-local" id="start_date" name="task_start_date" class="start_date form-control" required>
                 </div>
                 
                 <div class="form-group">
@@ -269,8 +296,9 @@
                 
                 <div class="form-group">
                     <label for="task_cost">Cost</label>
-                    <input type="number" id="task_cost" name="task_cost" min="0" step="0.01" class="form-control" required>
+                    <input type="number" id="task_cost" name="task_cost" min="0" step="0.01" class="form-control" required value="0">
                 </div>
+
                 
                 <div class="form-group" id="budget_container" style="{{ isset($parentTask) ? 'display: none;' : 'display: block;' }}">
                     <label for="budget">Budget</label>
@@ -280,11 +308,17 @@
                 <div class="form-group">
                     <label for="task_completion_status">Status</label>
                     <select id="task_completion_status" name="task_completion_status" class="form-control" required>
-                        <option value="">Select status</option>
-                        @foreach($completions as $completion)
-                            <option value="{{ $completion->id }}">{{ $completion->status }}</option>
-                        @endforeach
+                        @if(count($completions) > 0)
+                            @foreach($completions as $index => $completion)
+                                <option value="{{ $completion->id }}" {{ $index === 0 ? 'selected' : '' }}>
+                                    {{ $completion->status }}
+                                </option>
+                            @endforeach
+                        @else
+                            <option value="" selected>No statuses available</option>
+                        @endif
                     </select>
+
                 </div>
                 
                 <div class="form-group">
@@ -319,20 +353,25 @@
                     <i class="fas fa-plus"></i> {{ isset($parentTask) ? 'Create Child Task' : 'Create Task' }}
                 </button>
                 <a href="{{ route('viewing-all-tasks') }}">
-                <button type="button" class="btn btn-secondary" onclick="window.history.back()">
-                    <i class="fas fa-arrow-left"></i> Go Back
-                </button>
-    </a>
+                    <button type="button" class="btn btn-secondary" onclick="handleGoBack(event)">
+                        <i class="fas fa-arrow-left"></i> Go Back
+                    </button>
+                </a>
             </div>
         </form>
     </div>
+    <!-- Loading Overlay -->
+<div id="loadingOverlay">
+    <div class="spinner"></div>
+    <p>Loading... Please wait</p>
+</div>
 
     <!-- Modal for Adding Alerts -->
     <div id="alertModal" class="modal">
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             <h2>Add Alert</h2>
-            <input type="datetime-local" id="newAlert" class="form-control">
+            <input type="datetime-local" id="newAlert" class="start_date form-control">
             <button type="button" onclick="addAlert()" class="btn btn-primary mt-4">
                 <i class="fas fa-plus"></i> Add Alert
             </button>
@@ -340,6 +379,46 @@
     </div>
 
     <script>
+document.addEventListener("DOMContentLoaded", function () {
+    let startDateInputs = document.getElementsByClassName("start_date");
+
+    function setMinDateTime() {
+        let now = new Date();
+        let year = now.getFullYear();
+        let month = String(now.getMonth() + 1).padStart(2, "0");
+        let day = String(now.getDate()).padStart(2, "0");
+        let hours = String(now.getHours()).padStart(2, "0");
+        let minutes = String(now.getMinutes()).padStart(2, "0");
+
+        let minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        // Loop through all elements and set min attribute
+        for (let input of startDateInputs) {
+            input.min = minDateTime;
+        }
+    }
+
+    setMinDateTime();
+});
+
+        document.getElementById('taskForm').addEventListener('submit', function (event) {
+        // Show loading overlay
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        // Disable button to prevent multiple submissions
+        document.getElementById('submitButton').disabled = true;
+    });
+            function handleGoBack(event) {
+        event.preventDefault(); // Prevent default navigation
+
+        // Show loading overlay
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        // Redirect to the route after a short delay to show the effect
+        setTimeout(() => {
+            window.location.href = "{{ route('viewing-all-tasks') }}";
+        }, 500);
+    }
         // Open Modal
         function openModal() {
             document.getElementById('alertModal').style.display = 'block';

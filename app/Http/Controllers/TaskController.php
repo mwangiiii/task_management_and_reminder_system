@@ -377,53 +377,12 @@ public function update(Request $request, $id)
     
     // Modified method to implement soft delete
     // Controller method
-    public function destroy($id)
-    {
-        $task = Task::find($id);
-        
-        if (!$task) {
-            return back()->with('error', 'Task not found.');
-        }
-        
-        // Ensure the authenticated user owns the task
-        if (auth()->id() !== $task->user_id) {
-            return back()->with('error', 'Unauthorized action.');
-        }
-        
-        try {
-            // Check if the task is a parent task
-            if ($task->childTasks()->exists()) {
-                $childTasks = $task->childTasks()->get();
-                
-                // Check if all child tasks are completed
-                $incompleteChildTasks = $childTasks->where('completion_status_id', '!=', 3);
-                
-                if ($incompleteChildTasks->isNotEmpty()) {
-                    return back()->with('error', 'All child tasks must be completed before deleting the parent task.');
-                }
-                
-                // List child tasks and allow user to choose which ones to delete
-                return view('tasks.delete-child-tasks', [
-                    'parentTask' => $task,
-                    'childTasks' => $childTasks
-                ]);
-            }
-            
-            // If the task is not a parent or all child tasks are completed, proceed with soft deletion
-            $task->update(['deleted' => 1]);
-            $task->update(['completion_status_id' => 3]);
-            
-            // Log the soft deletion
-            Log::info('Task soft deleted:', ['task_id' => $id, 'user_id' => auth()->id()]);
-            
-            // Send email notification
-            Mail::to($task->user->email)->send(new TaskDeletedMail($task));
-            
-            return redirect()->route('viewing-all-tasks')->with('success', 'Task deleted successfully.');
-        } catch (\Exception $e) {
-            Log::error('Task Soft Deletion Failed:', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Failed to delete task.');
-        }
+    public function destroy(Request $request)
+    {   Log::info($request);
+        $ids = $request->input('id');
+        Log::info($ids);
+        Task::whereIn('id', $ids)->update(['deleted' => 1]);
+        return response()->json(['success' => 'Tasks deleted successfully']);
     }
 
 
@@ -836,9 +795,7 @@ public function filterTasks(Request $request)
     public function completedTasks(Request $request)
 {
     // Fetch tasks where `deleted_at` is not null AND `deleted` is not 0
-    $completedTasks = Task::whereNotNull('deleted_at')
-                          ->where('deleted', '!=', 0) // Exclude tasks marked as not deleted
-                          ->paginate(10);
+    $completedTasks = Task::where('deleted', 1)->paginate(10);
 
     return view('Task.deleted-tasks', compact('completedTasks'));
 }
@@ -893,6 +850,20 @@ public function updateBudget(Request $request, $parentTaskId)
         return redirect()->back()->with('error', 'An error occurred while updating the budget.');
     }
 }
+public function getChildren($id)
+{
+    $task = Task::find($id);
+
+    if (!$task) {
+        return response()->json(['error' => 'Task not found'], 404);
+    }
+
+    // Fetch child tasks using the relationship
+    $children = $task->childTasks()->select('id', 'name')->get();
+
+    return response()->json($children);
+}
+
 
     
 }
