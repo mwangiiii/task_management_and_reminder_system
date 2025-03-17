@@ -271,12 +271,6 @@
                                     </span>
                                 </td>
                                 <td class="actions">
-                                    <form action="{{ route('tasks.revive', $task->id) }}" method="POST" class="inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-primary btn-sm">
-                                            <i class="fas fa-trash-restore"></i> Restore
-                                        </button>
-                                    </form>
                                 </td>
                             </tr>
                         @endforeach

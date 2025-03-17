@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <title>Task Details</title>
     <style>
         :root {
@@ -541,7 +542,7 @@
                     <div class="task-details-grid">
                         <!-- Due Date -->
                         <div class="task-field">
-                            <div class="floating-label">ID: {{ $task->id }}</div>
+                            <div class="floating-label">Task : {{ $task->name }}</div>
                             <div class="task-field-label">Due Date</div>
                             <div class="task-field-value">
                                 <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -613,26 +614,92 @@
  <div class="task-field task-description">
                             <div class="task-field-label">Child Tasks</div>
                             <div class="task-field-value" style="display: block; margin-top: 0.5rem;">
-                                @if($task->childTasks->count() > 0)
-                                    <ul>
-                                        @foreach($task->childTasks as $childTask)
-                                            <li>
-                                                <a href="{{ route('tasks.show', $childTask->id) }}">{{ $childTask->name }}</a>
-                                                @if($childTask->childTasks->count() > 0)
-                                                    <ul>
-                                                        @foreach($childTask->childTasks as $subTask)
-                                                            <li>
-                                                                <a href="{{ route('tasks.show', $subTask->id) }}">{{ $subTask->name }}</a>
-                                                            </li>
-                                                        @endforeach
-                                                    </ul>
-                                                @endif
-                                            </li>
-                                        @endforeach
-                                    </ul>
-                                @else
-                                    <p>No child tasks available for this task.</p>
-                                @endif
+                            @if($task->childTasks->count() > 0)
+    <div class="card">
+        <div class="responsive-table">
+            <table class="task-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Status</th>
+                        <th>Budget / Cost</th>
+                        <th>Due Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($task->childTasks as $childTask)
+                        <tr class="task-row" data-id="{{ $childTask->id }}">
+                            <td class="truncate">
+                                <span style="margin-left: 20px;">↳ {{ $childTask->name }}</span>
+                            </td>
+                            <td>
+                                @php
+                                    $status = collect($completionStatus)->firstWhere('id', $childTask->completion_status_id)['status'] ?? 'Unknown';
+                                    $statusClass = strtolower($status) === 'complete' ? 'status-complete' : 
+                                                (strtolower($status) === 'in progress' ? 'status-in-progress' : 'status-incomplete');
+                                @endphp
+                                <span class="task-status {{ $statusClass }}">{{ $status }}</span>
+                            </td>
+                            <td>${{ number_format($childTask->budget, 2) }} / ${{ number_format($childTask->cost, 2) }}</td>
+                            <td>{{ \Carbon\Carbon::parse($childTask->due_date)->format('M d, Y') }}</td>
+                            <td class="actions">
+                                <a href="{{ route('tasks.showOneTask', ['id' => $childTask->id])}}">
+                                    <button class="btn btn-secondary btn-sm view-task-btn" data-id="{{$childTask->id}}>
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                </a>
+                                <a href="{{ route('tasks.edit', $childTask->id) }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                                <button class="btn btn-danger btn-sm delete-btn" data-id="{{ $childTask->id }}" data-name="{{ $childTask->name }}">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                                <a href="{{ route('tasks.createChild', ['parentTaskId' => $childTask->id]) }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Add Child
+                                </a>
+                            </td>
+                        </tr>
+
+                        @if($childTask->childTasks->count() > 0)
+                            @foreach($childTask->childTasks as $subTask)
+                                <tr class="task-row" data-id="{{ $subTask->id }}">
+                                    <td class="truncate" style="padding-left: 40px;">↳ {{ $subTask->name }}</td>
+                                    <td>
+                                        @php
+                                            $status = collect($completionStatus)->firstWhere('id', $subTask->completion_status_id)['status'] ?? 'Unknown';
+                                            $statusClass = strtolower($status) === 'complete' ? 'status-complete' : 
+                                                        (strtolower($status) === 'in progress' ? 'status-in-progress' : 'status-incomplete');
+                                        @endphp
+                                        <span class="task-status {{ $statusClass }}">{{ $status }}</span>
+                                    </td>
+                                    <td>${{ number_format($subTask->budget, 2) }} / ${{ number_format($subTask->cost, 2) }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($subTask->due_date)->format('M d, Y') }}</td>
+                                    <td class="actions">
+                                        <a href="{{ route('tasks.show', $subTask->id) }}">
+                                            <button class="btn btn-secondary btn-sm view-task-btn">
+                                                <i class="fas fa-eye"></i> View
+                                            </button>
+                                        </a>
+                                        <a href="{{ route('tasks.edit', $subTask->id) }}" class="btn btn-primary btn-sm">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                        <button class="btn btn-danger btn-sm delete-btn" data-id="{{ $subTask->id }}" data-name="{{ $subTask->name }}">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            @endforeach
+                        @endif
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+@else
+    <p>No child tasks available for this task.</p>
+@endif
+
                             </div>
                         </div>
                     </div>

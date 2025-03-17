@@ -529,9 +529,10 @@ public function update(Request $request, $id)
 {
     // Fetch the task with its related uploads, user, completion status, and child tasks
     $task = Task::with(['uploads', 'user', 'completionStatus', 'childTasks.childTasks'])->findOrFail($id);
+    $completionStatus = CompletionStatus::all();
 
     // Pass the task data to the view
-    return view('Task.show', compact('task'));
+    return view('Task.show', compact('task','completionStatus'));
 }
 
   
