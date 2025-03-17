@@ -77,7 +77,7 @@ class TaskController extends Controller
                 'task_recurrency' => 'required|exists:recurrencies,id',
                 'task_completion_status' => 'required|exists:completion__statuses,id',
                 'task_start_date' => 'required|date_format:Y-m-d\TH:i',
-                'task_due_date' => 'required|date_format:Y-m-d\TH:i',
+                'task_due_date' => 'date_format:Y-m-d\TH:i',
                 'parent_task_id' => 'nullable|exists:tasks,id',
                 'budget' => 'nullable|numeric|min:0',
                 'task_uploads.*' => 'nullable',
@@ -192,186 +192,187 @@ class TaskController extends Controller
 
     }
 
-
-public function update(Request $request, $id)
-{
-    // Log the incoming request data
-    Log::info('Update Task Request:', $request->all());
-
-    try {
-        // Find the task
-        $task = Task::findOrFail($id);
-        $user_id = auth()->id();
-
-        // Validate request data
-        $validated_task_data = $request->validate([
-            'task_name' => 'sometimes|string|max:255',
-            'task_alerts' => 'nullable|array', // Validate that task_alerts is an array
-            'task_alerts.*' => 'date_format:Y-m-d\TH:i', // Validate each alert in the array
-            'task_repeat' => 'nullable|boolean',
-            'task_description' => 'sometimes|string',
-            'task_cost' => 'nullable|numeric|min:0',
-            'task_category' => 'sometimes|exists:categories,id',
-            'task_recurrency' => 'sometimes|exists:recurrencies,id',
-            'task_completion_status' => 'sometimes|exists:completion__statuses,id',
-            'task_start_date' => 'nullable|date_format:Y-m-d\TH:i',
-            'task_due_date' => 'nullable|date_format:Y-m-d\TH:i',
-            'parent_task_id' => 'nullable|exists:tasks,id',
-            'budget' => 'nullable|numeric|min:0',
-            'task_uploads.*' => 'nullable|file|max:5120',
-        ]);
-
-        // Ensure 'task_repeat' is properly handled
-        $validated_task_data['task_repeat'] = $request->has('task_repeat') ? 1 : 0;
-
-        // Trim spaces from select box values
-        foreach (['task_category', 'task_completion_status', 'task_recurrency'] as $key) {
-            if (isset($validated_task_data[$key])) {
-                $validated_task_data[$key] = trim($validated_task_data[$key]);
-            }
-        }
-
-        // Prevent task from becoming its own parent
-        if (isset($validated_task_data['parent_task_id']) && $validated_task_data['parent_task_id'] == $id) {
-            return response()->json(['error' => 'A task cannot be its own parent.'], 400);
-        }
-
-        // Determine if the task is a parent or child
-        $is_parent_task = empty($validated_task_data['parent_task_id']);
-
-        // Check if the parent-child relationship is changing
-        $parent_relationship_changed = $task->parent_task_id != ($validated_task_data['parent_task_id'] ?? null);
-
-        if ($is_parent_task) {
-            // Ensure a budget is provided, default to 0 if missing
-            $validated_task_data['budget'] = $validated_task_data['budget'] ?? 0;
-
-            // If converting from child to parent, check if it has existing children
-            if ($parent_relationship_changed && Task::where('parent_task_id', $id)->where('deleted', 0)->exists()) {
-                return response()->json(['error' => 'Cannot convert a task with children to a child task.'], 400);
-            }
-        } else {
-            // If it's a child task, validate against the parent's budget
-            $parentTask = Task::find($validated_task_data['parent_task_id']);
-
-            if (!$parentTask) {
-                return response()->json(['error' => 'Parent task not found.'], 400);
-            }
-
-            // Get the total cost of existing child tasks (excluding this task if already a child)
-            $existing_child_costs = Task::where('parent_task_id', $parentTask->id)
-                                        ->where('id', '!=', $id)
-                                        ->where('deleted', 0)
-                                        ->sum('cost');
-
-            // Ensure the new cost does not exceed the parent's budget
-            if (($existing_child_costs + $validated_task_data['task_cost']) > $parentTask->budget) {
-                return response()->json([
-                    'error' => 'Total cost of child tasks exceeds the parent task budget.',
-                    'remaining_budget' => $parentTask->budget - $existing_child_costs
-                ], 400);
-            }
-
-            // Child tasks should not have a budget
-            $validated_task_data['budget'] = null;
-        }
-
-        // Update the task
-        $task->update([
-            'name' => $validated_task_data['task_name'] ?? $task->name,
-            'repeat' => $validated_task_data['task_repeat'],
-            'description' => $validated_task_data['task_description'] ?? $task->description,
-            'category_id' => $validated_task_data['task_category'] ?? $task->category_id,
-            'recurrency_id' => $validated_task_data['task_recurrency'] ?? $task->recurrency_id,
-            'cost' => $validated_task_data['task_cost'] ?? $task->cost,
-            'budget' => $is_parent_task ? $validated_task_data['budget'] : 0,
-            'completion_status_id' => $validated_task_data['task_completion_status'] ?? $task->completion_status_id,
-            'start_date' => $validated_task_data['task_start_date'] ?? $task->start_date,
-            'due_date' => $validated_task_data['task_due_date'] ?? $task->due_date,
-            'parent_task_id' => $validated_task_data['parent_task_id'] ?? $task->parent_task_id,
-            'user_id' => $user_id,
-            // Keep the existing deleted status
-        ]);
-
-        // Handle alerts
-        if (isset($validated_task_data['task_alerts'])) {
-            // Delete existing alerts for the task
-            Alert::where('task_id', $task->id)->delete();
-
-            // Create new alerts
-            foreach ($validated_task_data['task_alerts'] as $alert_time) {
-                Alert::create([
-                    'time_of_alert' => $alert_time,
-                    'task_id' => $task->id,
-                    'alert_sent' => false,
-                ]);
-            }
-        }
-
-        // Handle file uploads
-        if ($request->hasFile('task_uploads')) {
-            try {
-                if (class_exists('\OwenIt\Auditing\Models\Audit')) {
-                    \OwenIt\Auditing\Models\Audit::$recordEvents = false;
+    public function update(Request $request, $id)
+    {
+        // Log the incoming request data
+        Log::info('Update Task Request:', $request->all());
+    
+        try {
+            // Find the task
+            $task = Task::findOrFail($id);
+            $user_id = auth()->id();
+    
+            // Validate request data
+            $validated_task_data = $request->validate([
+                'task_name' => 'sometimes|string|max:255',
+                'task_alerts' => 'nullable|array', // Validate that task_alerts is an array
+                'task_alerts.*' => 'date_format:Y-m-d\TH:i', // Validate each alert in the array
+                'task_repeat' => 'nullable|boolean',
+                'task_description' => 'sometimes|string',
+                'task_cost' => 'nullable|numeric|min:0',
+                'task_category' => 'sometimes|exists:categories,id',
+                'task_recurrency' => 'sometimes|exists:recurrencies,id',
+                'task_completion_status' => 'sometimes|exists:completion__statuses,id',
+                'task_start_date' => 'nullable|date_format:Y-m-d\TH:i',
+                'task_due_date' => 'nullable|date_format:Y-m-d\TH:i',
+                'parent_task_id' => 'nullable|exists:tasks,id',
+                'budget' => 'nullable|numeric|min:0',
+                'task_uploads.*' => 'nullable|file|max:5120',
+                'priority_status_id' => 'nullable|exists:priority_statuses,id',
+            ]);
+    
+            // Ensure 'task_repeat' is properly handled
+            $validated_task_data['task_repeat'] = $request->has('task_repeat') ? 1 : 0;
+    
+            // Trim spaces from select box values
+            foreach (['task_category', 'task_completion_status', 'task_recurrency'] as $key) {
+                if (isset($validated_task_data[$key])) {
+                    $validated_task_data[$key] = trim($validated_task_data[$key]);
                 }
-
-                foreach ($request->file('task_uploads') as $upload) {
-                    if ($upload->isValid()) {
-                        $path_to_uploads = $upload->store('task_uploads_files', 'public');
-
-                        Upload::create([
-                            'task_id' => $task->id,
-                            'paths' => $path_to_uploads,
-                        ]);
-                    } else {
-                        Log::warning('Invalid file in upload:', ['filename' => $upload->getClientOriginalName()]);
+            }
+    
+            // Prevent task from becoming its own parent
+            if (isset($validated_task_data['parent_task_id']) && $validated_task_data['parent_task_id'] == $id) {
+                return response()->json(['error' => 'A task cannot be its own parent.'], 400);
+            }
+    
+            // Determine if the task is a parent or child
+            $is_parent_task = empty($validated_task_data['parent_task_id']);
+    
+            // Check if the parent-child relationship is changing
+            $parent_relationship_changed = $task->parent_task_id != ($validated_task_data['parent_task_id'] ?? null);
+    
+            if ($is_parent_task) {
+                // Ensure a budget is provided, default to 0 if missing
+                $validated_task_data['budget'] = $validated_task_data['budget'] ?? 0;
+    
+                // If converting from child to parent, check if it has existing children
+                if ($parent_relationship_changed && Task::where('parent_task_id', $id)->where('deleted', 0)->exists()) {
+                    return response()->json(['error' => 'Cannot convert a task with children to a parent task.'], 400);
+                }
+            } else {
+                // If it's a child task, validate against the parent's budget
+                $parentTask = Task::find($validated_task_data['parent_task_id']);
+    
+                if (!$parentTask) {
+                    return response()->json(['error' => 'Parent task not found.'], 400);
+                }
+    
+                // Get the total cost of existing child tasks (excluding this task if already a child)
+                $existing_child_costs = Task::where('parent_task_id', $parentTask->id)
+                                            ->where('id', '!=', $id)
+                                            ->where('deleted', 0)
+                                            ->sum('cost');
+    
+                // Ensure the new cost does not exceed the parent's budget
+                if (($existing_child_costs + ($validated_task_data['task_cost'] ?? $task->cost)) > $parentTask->budget) {
+                    return response()->json([
+                        'error' => 'Total cost of child tasks exceeds the parent task budget.',
+                        'remaining_budget' => $parentTask->budget - $existing_child_costs
+                    ], 400);
+                }
+    
+                // Child tasks should not have a budget
+                $validated_task_data['budget'] = null;
+            }
+    
+            // Update the task
+            $task->update([
+                'name' => $validated_task_data['task_name'] ?? $task->name,
+                'repeat' => $validated_task_data['task_repeat'],
+                'description' => $validated_task_data['task_description'] ?? $task->description,
+                'category_id' => $validated_task_data['task_category'] ?? $task->category_id,
+                'recurrency_id' => $validated_task_data['task_recurrency'] ?? $task->recurrency_id,
+                'cost' => $validated_task_data['task_cost'] ?? $task->cost,
+                'budget' => $is_parent_task ? ($validated_task_data['budget'] ?? $task->budget) : 0,
+                'completion_status_id' => $validated_task_data['task_completion_status'] ?? $task->completion_status_id,
+                'start_date' => $validated_task_data['task_start_date'] ?? $task->start_date,
+                'due_date' => $validated_task_data['task_due_date'] ?? $task->due_date,
+                'parent_task_id' => $validated_task_data['parent_task_id'] ?? $task->parent_task_id,
+                'user_id' => $user_id,
+                'priority_status_id' => $validated_task_data['priority_status_id'] ?? $task->priority_status_id,
+                // Keep the existing deleted status
+            ]);
+    
+            // Handle alerts
+            if (isset($validated_task_data['task_alerts'])) {
+                // Delete existing alerts for the task
+                Alert::where('task_id', $task->id)->delete();
+    
+                // Create new alerts
+                foreach ($validated_task_data['task_alerts'] as $alert_time) {
+                    Alert::create([
+                        'time_of_alert' => $alert_time,
+                        'task_id' => $task->id,
+                        'alert_sent' => false,
+                    ]);
+                }
+            }
+    
+            // Handle file uploads
+            if ($request->hasFile('task_uploads')) {
+                try {
+                    if (class_exists('\OwenIt\Auditing\Models\Audit')) {
+                        \OwenIt\Auditing\Models\Audit::$recordEvents = false;
                     }
+    
+                    foreach ($request->file('task_uploads') as $upload) {
+                        if ($upload->isValid()) {
+                            $path_to_uploads = $upload->store('task_uploads_files', 'public');
+    
+                            Upload::create([
+                                'task_id' => $task->id,
+                                'paths' => $path_to_uploads,
+                            ]);
+                        } else {
+                            Log::warning('Invalid file in upload:', ['filename' => $upload->getClientOriginalName()]);
+                        }
+                    }
+    
+                    if (class_exists('\OwenIt\Auditing\Models\Audit')) {
+                        \OwenIt\Auditing\Models\Audit::$recordEvents = true;
+                    }
+                } catch (\Exception $e) {
+                    if (class_exists('\OwenIt\Auditing\Models\Audit')) {
+                        \OwenIt\Auditing\Models\Audit::$recordEvents = true;
+                    }
+    
+                    Log::error('File Upload Failed:', [
+                        'error' => $e->getMessage(),
+                        'task_id' => $task->id
+                    ]);
                 }
-
-                if (class_exists('\OwenIt\Auditing\Models\Audit')) {
-                    \OwenIt\Auditing\Models\Audit::$recordEvents = true;
-                }
-            } catch (\Exception $e) {
-                if (class_exists('\OwenIt\Auditing\Models\Audit')) {
-                    \OwenIt\Auditing\Models\Audit::$recordEvents = true;
-                }
-
-                Log::error('File Upload Failed:', [
-                    'error' => $e->getMessage(),
-                    'task_id' => $task->id
-                ]);
             }
+    
+            // Send email notification
+            Mail::to($task->user->email)->send(new TaskCreatedMail($task));
+    
+            // Return JSON response for AJAX requests
+            if ($request->expectsJson()) {
+                return response()->json(['message' => 'Task updated successfully!', 'task' => $task], 200);
+            }
+    
+            // Redirect on success
+            return redirect()->route('tasks.showOneTask', $task->id)->with('success', 'Task updated successfully!');
+    
+        } catch (ValidationException $e) {
+            Log::error('Validation Failed:', $e->errors());
+    
+            if ($request->expectsJson()) {
+                return response()->json(['errors' => $e->errors()], 422);
+            }
+    
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            Log::error('Error updating task:', ['task_id' => $id, 'error' => $e->getMessage()]);
+    
+            if ($request->expectsJson()) {
+                return response()->json(['error' => 'Failed to update task: ' . $e->getMessage()], 500);
+            }
+    
+            return redirect()->back()->with('error', 'Failed to update task: ' . $e->getMessage())->withInput();
         }
-
-        // Send email notification
-        Mail::to($task->user->email)->send(new TaskCreatedMail($task));
-
-        // Return JSON response for AJAX requests
-        if ($request->expectsJson()) {
-            return response()->json(['message' => 'Task updated successfully!', 'task' => $task], 200);
-        }
-
-        // Redirect on success
-        return redirect()->route('tasks.showOneTask', $task->id)->with('success', 'Task updated successfully!');
-
-    } catch (ValidationException $e) {
-        Log::error('Validation Failed:', $e->errors());
-
-        if ($request->expectsJson()) {
-            return response()->json(['errors' => $e->errors()], 422);
-        }
-
-        return redirect()->back()->withErrors($e->errors())->withInput();
-    } catch (\Exception $e) {
-        Log::error('Error updating task:', ['task_id' => $id, 'error' => $e->getMessage()]);
-
-        if ($request->expectsJson()) {
-            return response()->json(['error' => 'Failed to update task: ' . $e->getMessage()], 500);
-        }
-
-        return redirect()->back()->with('error', 'Failed to update task: ' . $e->getMessage())->withInput();
     }
-}
     /**
      * Display a listing of all tasks.
      *
@@ -919,6 +920,39 @@ public function updatePriority(Request $request, Task $task)
             'message' => 'Failed to update priority.',
         ], 500);
     }
+}
+
+
+public function startTask($id)
+{
+    $task = Task::findOrFail($id);
+
+    // Update started_at and completion_status_id
+    $task->update([
+        'started_at' => now(),
+        'completion_status_id' => 2, // Assuming 2 is the ID for "In Progress"
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Task started successfully!',
+    ]);
+}
+
+public function completeTask($id)
+{
+    $task = Task::findOrFail($id);
+
+    // Update completed_at and completion_status_id
+    $task->update([
+        'completed_at' => now(),
+        'completion_status_id' => 3, // Assuming 3 is the ID for "Completed"
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Task completed successfully!',
+    ]);
 }
 
 

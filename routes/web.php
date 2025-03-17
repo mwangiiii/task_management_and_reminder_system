@@ -79,6 +79,13 @@ Route::get('/dashboard/create/task', [TaskController::class,'index'])->name('das
 Route::post('/tasks/{task}/update-priority', [TaskController::class, 'updatePriority'])->name('update.priority'); //updating priority 
 
 
+// Start Task
+Route::post('/tasks/{id}/start', [TaskController::class, 'startTask'])->name('tasks.start');
+
+// Complete Task
+Route::post('/tasks/{id}/complete', [TaskController::class, 'completeTask'])->name('tasks.complete');
+
+
 
     
 

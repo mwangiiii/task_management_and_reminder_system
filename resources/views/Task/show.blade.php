@@ -74,6 +74,41 @@
             gap: 1rem;
         }
 
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-content {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 300px;
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .modal-body {
+        font-size: 0.875rem;
+    }
+
+
         @media (min-width: 640px) {
             .header-content {
                 flex-direction: row;
@@ -801,22 +836,31 @@
                     <!-- Action Buttons -->
                     <div class="task-actions">
                         <div class="action-buttons">
+
+                              <!-- Start Task Button -->
+        <button onclick="startTask({{ $task->id }})" class="btn btn-outline-primary">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Start Task
+        </button>
+
+        <!-- Complete Task Button -->
+        <button onclick="completeTask({{ $task->id }})" class="btn btn-outline-success">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Complete Task
+        </button>
+
                             <a href="{{ route('tasks.edit', $task->id) }}" class="btn btn-outline-primary">
                                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                                 Edit Task
                             </a>
-                            
-                            <form action="{{ route('task.remove', ['id' => $task->id]) }}" method="POST" style="display: inline;">
-    @csrf
-    @method('DELETE')
-    <button type="submit" class="btn btn-outline-success">
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        Mark as Complete
-    </button>
+     
 </form>
 <a href="{{ route('tasks.createChild', ['parentTaskId' => $task->id]) }}" class="btn btn-primary">
             <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -824,7 +868,7 @@
             </svg>
             Add Child Task
         </a>
-        a
+        
                         </div>
                         <div>
                             <a href="{{ route('viewing-all-tasks') }}" class="btn btn-primary">
@@ -923,24 +967,102 @@
         </div>
     </div>
 
-    <script>
-        // Toggle dropdown
-        function toggleDropdown() {
-            document.getElementById('dropdown-menu').classList.toggle('show');
-        }
-        
-        // Close dropdown when clicking outside
-        window.onclick = function(event) {
-            if (!event.target.matches('.dropdown button')) {
-                var dropdowns = document.getElementsByClassName('dropdown-menu');
-                for (var i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
+
+
+    <!-- Success/Error Modal -->
+<div id="message-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="position: fixed; top: 20px; right: 20px; width: 300px; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <div class="modal-header">
+            <span id="modal-title" style="font-weight: bold;"></span>
+            <button onclick="closeModal()" style="background: none; border: none; cursor: pointer; font-size: 1.25rem; color: #666;">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="modal-message"></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle dropdown
+    function toggleDropdown() {
+        document.getElementById('dropdown-menu').classList.toggle('show');
+    }
+
+    // Close dropdown when clicking outside
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropdown button')) {
+            var dropdowns = document.getElementsByClassName('dropdown-menu');
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
                 }
             }
         }
-    </script>
+    }
+
+    // Function to show the modal
+    function showModal(title, message) {
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-message').textContent = message;
+        document.getElementById('message-modal').style.display = 'block';
+
+        // Automatically close the modal after 3 seconds
+        setTimeout(() => {
+            closeModal();
+        }, 3000);
+    }
+
+    // Function to close the modal
+    function closeModal() {
+        document.getElementById('message-modal').style.display = 'none';
+    }
+
+    // Function to start a task
+    function startTask(taskId) {
+        fetch(`/tasks/${taskId}/start`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showModal('Success', data.message); // Show success modal
+            } else {
+                showModal('Error', 'Failed to start task.'); // Show error modal
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showModal('Error', 'An error occurred while starting the task.'); // Show error modal
+        });
+    }
+
+    // Function to complete a task
+    function completeTask(taskId) {
+        fetch(`/tasks/${taskId}/complete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showModal('Success', data.message); // Show success modal
+            } else {
+                showModal('Error', 'Failed to complete task.'); // Show error modal
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showModal('Error', 'An error occurred while completing the task.'); // Show error modal
+        });
+    }
+</script>
 </body>
 </html>
