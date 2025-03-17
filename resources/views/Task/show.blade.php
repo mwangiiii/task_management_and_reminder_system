@@ -570,14 +570,108 @@
                             </div>
                         </div>
 
-                        <!-- Priority -->
-                        <div class="task-field">
-                            <div class="task-field-label">Priority</div>
-                            <div class="task-field-value">
-                                <span class="priority-indicator-inline priority-high-inline"></span>
-                                <span>High</span>
-                            </div>
-                        </div>
+                        <div class="form-group" style="position: relative; padding: 1.25rem; border-radius: var(--radius); background: linear-gradient(135deg, var(--bg-subtle) 0%, var(--bg) 100%); transition: transform 0.3s ease;">
+    <label for="priority_status_id" style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-light); margin-bottom: 0.75rem;">Priority</label>
+    <div style="position: relative;">
+        <select 
+            id="priority_status_id" 
+            name="priority_status_id" 
+            class="form-control" 
+            style="width: 100%; 
+                   padding: 0.5rem 2rem 0.5rem 0.75rem; 
+                   border: none; 
+                   background: transparent; 
+                   font-size: 1.125rem; 
+                   font-weight: 600; 
+                   color: var(--text); 
+                   appearance: none;
+                   cursor: pointer;
+                   border-radius: var(--radius);" 
+            required>
+            <option value="{{ $default_priority_status->id }}" selected>
+                {{ $default_priority_status->priority_status }}
+            </option>
+            @foreach($other_priority_statuses as $priority)                         
+                <option value="{{ $priority->id }}">{{ $priority->priority_status }}</option>
+            @endforeach
+        </select>
+        <!-- Custom dropdown arrow -->
+        <div style="position: absolute; top: 50%; right: 0.75rem; transform: translateY(-50%); pointer-events: none;">
+            <svg width="16" height="16" fill="none" stroke="var(--text-light)" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+    </div>
+    <!-- Update button -->
+    <button 
+        onclick="updatePriority()" 
+        style="margin-top: 0.75rem; 
+               padding: 0.5rem 1rem; 
+               background-color: var(--primary); 
+               color: white; 
+               border: none; 
+               border-radius: var(--radius); 
+               font-weight: 500; 
+               cursor: pointer; 
+               transition: background-color 0.2s;">
+        Update Priority
+    </button>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" style="position: fixed; top: 1rem; right: 1rem; background: var(--bg); border-left: 4px solid var(--success); padding: 1rem; box-shadow: var(--shadow); border-radius: var(--radius); z-index: 1000; display: none; align-items: center; transform: translateX(120%); transition: transform 0.3s ease;">
+    <svg width="20" height="20" fill="none" stroke="var(--success)" viewBox="0 0 24 24" style="margin-right: 0.75rem;">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+    </svg>
+    <span id="toast-message" style="font-size: 0.875rem; font-weight: 500;">Priority updated successfully!</span>
+</div>
+
+<script>
+    function showToast(message, isSuccess = true) {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+
+        // Update toast message and style
+        toastMessage.textContent = message;
+        toast.style.borderLeftColor = isSuccess ? 'var(--success)' : 'var(--danger)';
+
+        // Show the toast
+        toast.style.display = 'flex';
+        setTimeout(() => toast.style.transform = 'translateX(0)', 10);
+
+        // Hide the toast after 3 seconds
+        setTimeout(() => {
+            toast.style.transform = 'translateX(120%)';
+            setTimeout(() => toast.style.display = 'none', 300);
+        }, 3000);
+    }
+
+    function updatePriority() {
+        const priorityStatusId = document.getElementById('priority_status_id').value;
+        const taskId = {{ $task->id }}; // Ensure the task ID is available in your Blade template
+
+        fetch(`/tasks/${taskId}/update-priority`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}', // CSRF token for Laravel
+            },
+            body: JSON.stringify({ priority_status_id: priorityStatusId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Priority updated successfully!', true);
+            } else {
+                showToast('Failed to update priority.', false);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred while updating priority.', false);
+        });
+    }
+</script>
 
                         <!-- Created/Updated Info -->
                         <div class="task-field">

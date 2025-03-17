@@ -21,7 +21,7 @@ Route::get('/', function () {
     Route::post('/storing/tasks', [TaskController::class,'store'])->name('tasks.store');// to create
     Route::patch('/update/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update'); //to update
 
-    Route::get('/creating/task/form', [TaskController::class, 'index'])
+    Route::get('w', [TaskController::class, 'index'])
      ->name('creating-form'); //to display form
 
      Route::get('/tasks/{id}/edit', [TaskController::class, 'displayUpdateForm'])->name('tasks.edit'); //accessing form ya to update one item
@@ -76,6 +76,7 @@ Route::get('/tasks{id}',[TaskController::class, 'list'])->name('task-mail-info')
 
 
 Route::get('/dashboard/create/task', [TaskController::class,'index'])->name('dashboard');
+Route::post('/tasks/{task}/update-priority', [TaskController::class, 'updatePriority'])->name('update.priority'); //updating priority 
 
 
 

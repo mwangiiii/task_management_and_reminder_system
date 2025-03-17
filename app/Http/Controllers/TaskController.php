@@ -16,6 +16,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Storage;
 use App\Mail\TaskDeletedMail;
 use App\Mail\TaskRestoredMail;
+use App\Models\Priority;
 
 use App\Services\NovuService;
 use Carbon\Carbon;
@@ -80,6 +81,8 @@ class TaskController extends Controller
                 'parent_task_id' => 'nullable|exists:tasks,id',
                 'budget' => 'nullable|numeric|min:0',
                 'task_uploads.*' => 'nullable',
+                'priority_status_id' => 'nullable|exists:priority_statuses,id',
+
             ]);
     
             Log::info('Validated Data:', $validated_task_data);
@@ -139,6 +142,7 @@ class TaskController extends Controller
             'due_date' => $validated_task_data['task_due_date'],
             'parent_task_id' => $validated_task_data['parent_task_id'] ?? null,
             'user_id' => $validated_task_data['user_id'],
+            'priority_status_id' => $validated_task_data['priority_status_id'] ?? 1,
             'deleted' => 0,
         ]);
     
@@ -523,8 +527,12 @@ public function update(Request $request, $id)
     $task = Task::with(['uploads', 'user', 'completionStatus', 'childTasks.childTasks'])->findOrFail($id);
     $completionStatus = CompletionStatus::all();
 
+    $default_priority_status = Priority::find(1); // Default to "Low"
+    $other_priority_statuses = Priority::where('id', '!=', 1)->get();
+
+
     // Pass the task data to the view
-    return view('Task.show', compact('task','completionStatus'));
+    return view('Task.show', compact('task','completionStatus','default_priority_status','other_priority_statuses'));
 }
 
   
@@ -884,6 +892,35 @@ public function updateBudget(Request $request, $parentTaskId)
         return redirect()->back()->with('error', 'An error occurred while updating the budget.');
     }
 }
+
+
+public function updatePriority(Request $request, Task $task)
+{
+    // Validate the request
+    $request->validate([
+        'priority_status_id' => 'required|exists:priority_statuses,id',
+    ]);
+
+    try {
+        // Update the task's priority
+        $task->priority_status_id = $request->input('priority_status_id');
+        $task->save();
+
+        // Return a success response
+        return response()->json([
+            'success' => true,
+            'message' => 'Priority updated successfully!',
+        ]);
+    } catch (\Exception $e) {
+        // Log the error and return a failure response
+        Log::error('Error updating priority: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to update priority.',
+        ], 500);
+    }
+}
+
 
     
 }

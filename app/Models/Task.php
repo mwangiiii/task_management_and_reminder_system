@@ -71,6 +71,10 @@ public function user(){
     return $this->belongsTo(User::class);
 }
 
+public function priority(){
+    return $this->hasOne(Priority::class, 'priority_statuses_id');
+}
+
 
 }
 
