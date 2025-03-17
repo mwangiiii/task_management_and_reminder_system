@@ -833,15 +833,14 @@ public function filterTasks(Request $request)
 }
 
 
-    public function completedTasks(Request $request)
+public function completedTasks(Request $request)
 {
-    // Fetch tasks where `deleted_at` is not null AND `deleted` is not 0
-    $completedTasks = Task::whereNotNull('deleted_at')
-                          ->where('deleted', '!=', 0) // Exclude tasks marked as not deleted
-                          ->paginate(10);
+    // Fetch tasks where `deleted` is 1 (indicating deleted tasks)
+    $completedTasks = Task::where('deleted', 1)->paginate(10);
 
     return view('Task.deleted-tasks', compact('completedTasks'));
 }
+
 
 
 public function updateBudget(Request $request, $parentTaskId)
