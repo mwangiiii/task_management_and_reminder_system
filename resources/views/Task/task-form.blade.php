@@ -269,7 +269,7 @@
                 
                 <div class="form-group">
                     <label for="task_cost">Cost</label>
-                    <input type="number" id="task_cost" name="task_cost" min="0" step="0.01" class="form-control" required>
+                    <input type="number" id="task_cost" name="task_cost" min="0" step="0.01" class="form-control">
                 </div>
                 
                 <div class="form-group" id="budget_container" style="{{ isset($parentTask) ? 'display: none;' : 'display: block;' }}">
@@ -278,14 +278,17 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="task_completion_status">Status</label>
-                    <select id="task_completion_status" name="task_completion_status" class="form-control" required>
-                        <option value="">Select status</option>
-                        @foreach($completions as $completion)
-                            <option value="{{ $completion->id }}">{{ $completion->status }}</option>
-                        @endforeach
-                    </select>
-                </div>
+    <label for="task_completion_status">Status</label>
+    <select id="task_completion_status" name="task_completion_status" class="form-control" required>
+        <option value="{{ $default_completion_status_in_view->id }}" selected>
+            {{ $default_completion_status_in_view->status }}
+        </option>
+        @foreach($other_completion_status_in_view as $completion)                         
+            <option value="{{ $completion->id }}">{{ $completion->status }}</option>
+        @endforeach
+    </select>
+</div>
+
                 
                 <div class="form-group">
                     <label for="task_recurrency">Recurrency</label>

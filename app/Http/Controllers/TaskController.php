@@ -32,13 +32,22 @@ class TaskController extends Controller
 {   
     public function index()
     {
+        $default_completion_status_in_view = CompletionStatus::first();
+        $other_completion_status_in_view = CompletionStatus::where('id', '!=', $default_completion_status_in_view->id)->get();
+    
         $categories = Category::all();
         $recurrencies = Recurrency::all();
-        $completions = CompletionStatus::all();
         $tasks = Task::where('deleted', 0)->get();
-        return view('Task.task-form', compact('categories', 'completions', 'recurrencies', 'tasks'));
+    
+        return view('Task.task-form', compact(
+            'categories', 
+            'other_completion_status_in_view', 
+            'default_completion_status_in_view', 
+            'recurrencies', 
+            'tasks'
+        ));
     }
-
+    
 
     public function viewAllTasks()
     { 
@@ -62,7 +71,7 @@ class TaskController extends Controller
                 'task_alerts.*' => 'date_format:Y-m-d\TH:i', // Validate each alert in the array
                 'task_repeat' => 'nullable|boolean',
                 'task_description' => 'required|string',
-                'task_cost' => 'required|numeric|min:0',
+               'task_cost' => 'nullable|numeric|min:0',
                 'task_category' => 'required|exists:categories,id',
                 'task_recurrency' => 'required|exists:recurrencies,id',
                 'task_completion_status' => 'required|exists:completion__statuses,id',
@@ -123,7 +132,7 @@ class TaskController extends Controller
             'description' => $validated_task_data['task_description'],
             'category_id' => $validated_task_data['task_category'],
             'recurrency_id' => $validated_task_data['task_recurrency'],
-            'cost' => $validated_task_data['task_cost'],
+            'cost' => $validated_task_data['task_cost'] ?? 0,
             'budget' => $is_parent_task ? $validated_task_data['budget'] : 0,
             'completion_status_id' => $validated_task_data['task_completion_status'],
             'start_date' => $validated_task_data['task_start_date'],
@@ -175,7 +184,8 @@ class TaskController extends Controller
         }
     
         // Otherwise return a redirect with success message
-        return redirect()->back()->with('success', 'Task created successfully!');
+        return redirect()->route('tasks.showOneTask', ['id' => $task->id])->with('success', 'Task created successfully!');
+
     }
 
 
@@ -505,24 +515,6 @@ public function update(Request $request, $id)
         return view('Task.deleted-tasks', compact('deletedTasks'));
     }
 
-
-    // public function showOneTask($id)
-    // {
-    //     // Retrieve the task by ID
-    //     $task = Task::findOrFail($id);
-    
-    //     // Return the task details view
-    //     return view('Task.show', compact('task'));
-    // }
-    
-    // public function showOneTask($id)
-    // {
-    //     // Fetch the task with its related uploads, user, completion status, and child tasks
-    //     $task = Task::with(['uploads', 'user', 'completionStatus', 'childTasks.childTasks'])->findOrFail($id);
-    
-    //     // Pass the task data to the view
-    //     return view('Task.show', compact('task'));
-    // }
 
 
     public function showOneTask($id)
