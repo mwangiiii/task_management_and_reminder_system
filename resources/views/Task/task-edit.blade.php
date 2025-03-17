@@ -437,7 +437,7 @@
                 })
                 .then(data => {
                     console.log('Task updated successfully:', data);
-                    window.location.href = "{{ route('tasks.index') }}"; // Redirect after success
+                    window.location.href = "{{ route('viewing-all-tasks') }}"; // Redirect after success
                 })
                 .finally(() => {
                     // Hide the loader
