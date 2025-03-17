@@ -114,9 +114,7 @@
         <i class="fas fa-trash"></i>
     </button>
 
-                    <a href="{{ route('tasks.createChild', ['parentTaskId' => $task->id]) }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus"></i> Add Child
-                    </a>
+                    
                 </td>
             </tr>
             @foreach (optional($task->children) as $child)
