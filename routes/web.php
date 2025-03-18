@@ -21,7 +21,7 @@ Route::get('/', function () {
     Route::post('/storing/tasks', [TaskController::class,'store'])->name('tasks.store');// to create
     Route::patch('/update/tasks/{id}', [TaskController::class, 'update'])->name('tasks.update'); //to update
 
-    Route::get('/creating/task/form', [TaskController::class, 'index'])
+    Route::get('w', [TaskController::class, 'index'])
      ->name('creating-form'); //to display form
 
      Route::get('/tasks/{id}/edit', [TaskController::class, 'displayUpdateForm'])->name('tasks.edit'); //accessing form ya to update one item
@@ -80,6 +80,14 @@ Route::post('/recurrency/store', [TaskController::class, 'storeRecurrency'])->na
 Route::post('/process-payment', [TaskController::class, 'processPayment'])->name('process-payment');
 Route::post('/task/start/{id}', [TaskController::class, 'startTask'])->name('task.start');
 Route::post('/task/update-status/{id}', [TaskController::class, 'updateStatus'])->name('task.updateStatus');
+Route::post('/tasks/{task}/update-priority', [TaskController::class, 'updatePriority'])->name('update.priority'); //updating priority 
+
+
+// Start Task
+Route::post('/tasks/{id}/start', [TaskController::class, 'startTask'])->name('tasks.start');
+
+// Complete Task
+Route::post('/tasks/{id}/complete', [TaskController::class, 'completeTask'])->name('tasks.complete');
 
 
 

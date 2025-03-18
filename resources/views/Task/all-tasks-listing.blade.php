@@ -135,6 +135,8 @@
                     <button class="btn btn-danger btn-sm delete-btn" data-id="{{ $task->id }}" data-name="{{ $task->name }}">
         <i class="fas fa-trash"></i>
     </button>
+
+                    
                 </td>
             </tr>
             @foreach (optional($task->children) as $child)

@@ -26,6 +26,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             CompletionSeeder::class,
             RecurrencySeeder::class,
+            PriorityStatusSeeder::class,
         ]);
     }
 }

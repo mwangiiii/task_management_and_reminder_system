@@ -75,6 +75,41 @@
             gap: 1rem;
         }
 
+
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .modal-content {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 300px;
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+    }
+
+    .modal-body {
+        font-size: 0.875rem;
+    }
+
+
         @media (min-width: 640px) {
             .header-content {
                 flex-direction: row;
@@ -518,28 +553,6 @@
                             <h1 class="task-title">{{ $task->name }}</h1>
                         </div>
                         <div>
-                        <td>
-                            @if($task->completion_status_id == 1) 
-                                <!-- Start Task Button (if status is Pending) -->
-                                <form action="{{ route('task.start', ['id' => $task->id]) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="btn btn-primary btn-sm">
-                                        <i class="fas fa-play"></i> Start Task
-                                    </button>
-                                </form>
-                            @else 
-                                <!-- Status Dropdown -->
-                                <form action="{{ route('task.updateStatus', ['id' => $task->id]) }}" method="POST">
-                                    @csrf
-                                    <select name="status" onchange="this.form.submit()" class="form-control">
-                                        <option value="1" {{ $task->completion_status_id == 1 ? 'selected' : '' }}>Pending</option>
-                                        <option value="2" {{ $task->completion_status_id == 2 ? 'selected' : '' }}>In Progress</option>
-                                        <option value="3" {{ $task->completion_status_id == 3 ? 'selected' : '' }}>Completed</option>
-                                        <option value="4" {{ $task->completion_status_id == 4 ? 'selected' : '' }}>Incomplete</option>
-                                    </select>
-                                </form>
-                            @endif
-                        </td>
 
                         </div>
                         <div class="status-actions">
@@ -596,14 +609,108 @@
                             </div>
                         </div>
 
-                        <!-- Priority -->
-                        <div class="task-field">
-                            <div class="task-field-label">Priority</div>
-                            <div class="task-field-value">
-                                <span class="priority-indicator-inline priority-high-inline"></span>
-                                <span>High</span>
-                            </div>
-                        </div>
+                        <div class="form-group" style="position: relative; padding: 1.25rem; border-radius: var(--radius); background: linear-gradient(135deg, var(--bg-subtle) 0%, var(--bg) 100%); transition: transform 0.3s ease;">
+    <label for="priority_status_id" style="display: block; font-size: 0.875rem; font-weight: 500; color: var(--text-light); margin-bottom: 0.75rem;">Priority</label>
+    <div style="position: relative;">
+        <select 
+            id="priority_status_id" 
+            name="priority_status_id" 
+            class="form-control" 
+            style="width: 100%; 
+                   padding: 0.5rem 2rem 0.5rem 0.75rem; 
+                   border: none; 
+                   background: transparent; 
+                   font-size: 1.125rem; 
+                   font-weight: 600; 
+                   color: var(--text); 
+                   appearance: none;
+                   cursor: pointer;
+                   border-radius: var(--radius);" 
+            required>
+            <option value="{{ $default_priority_status->id }}" selected>
+                {{ $default_priority_status->priority_status }}
+            </option>
+            @foreach($other_priority_statuses as $priority)                         
+                <option value="{{ $priority->id }}">{{ $priority->priority_status }}</option>
+            @endforeach
+        </select>
+        <!-- Custom dropdown arrow -->
+        <div style="position: absolute; top: 50%; right: 0.75rem; transform: translateY(-50%); pointer-events: none;">
+            <svg width="16" height="16" fill="none" stroke="var(--text-light)" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+        </div>
+    </div>
+    <!-- Update button -->
+    <button 
+        onclick="updatePriority()" 
+        style="margin-top: 0.75rem; 
+               padding: 0.5rem 1rem; 
+               background-color: var(--primary); 
+               color: white; 
+               border: none; 
+               border-radius: var(--radius); 
+               font-weight: 500; 
+               cursor: pointer; 
+               transition: background-color 0.2s;">
+        Update Priority
+    </button>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast" style="position: fixed; top: 1rem; right: 1rem; background: var(--bg); border-left: 4px solid var(--success); padding: 1rem; box-shadow: var(--shadow); border-radius: var(--radius); z-index: 1000; display: none; align-items: center; transform: translateX(120%); transition: transform 0.3s ease;">
+    <svg width="20" height="20" fill="none" stroke="var(--success)" viewBox="0 0 24 24" style="margin-right: 0.75rem;">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+    </svg>
+    <span id="toast-message" style="font-size: 0.875rem; font-weight: 500;">Priority updated successfully!</span>
+</div>
+
+<script>
+    function showToast(message, isSuccess = true) {
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+
+        // Update toast message and style
+        toastMessage.textContent = message;
+        toast.style.borderLeftColor = isSuccess ? 'var(--success)' : 'var(--danger)';
+
+        // Show the toast
+        toast.style.display = 'flex';
+        setTimeout(() => toast.style.transform = 'translateX(0)', 10);
+
+        // Hide the toast after 3 seconds
+        setTimeout(() => {
+            toast.style.transform = 'translateX(120%)';
+            setTimeout(() => toast.style.display = 'none', 300);
+        }, 3000);
+    }
+
+    function updatePriority() {
+        const priorityStatusId = document.getElementById('priority_status_id').value;
+        const taskId = {{ $task->id }}; // Ensure the task ID is available in your Blade template
+
+        fetch(`/tasks/${taskId}/update-priority`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}', // CSRF token for Laravel
+            },
+            body: JSON.stringify({ priority_status_id: priorityStatusId }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast('Priority updated successfully!', true);
+            } else {
+                showToast('Failed to update priority.', false);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showToast('An error occurred while updating priority.', false);
+        });
+    }
+</script>
 
                         <!-- Created/Updated Info -->
                         <div class="task-field">
@@ -735,23 +842,59 @@
                     <!-- Action Buttons -->
                     <div class="task-actions">
                         <div class="action-buttons">
+
+                              <!-- Start Task Button -->
+                              <td>
+                            @if($task->completion_status_id == 1) 
+                                <!-- Start Task Button (if status is Pending) -->
+                                <form action="{{ route('task.start', ['id' => $task->id]) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-primary">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+                                        <i class="fas fa-play"></i> Start Task
+                                    </button>
+                                </form>
+                            @else 
+                                <!-- Status Dropdown -->
+                                <form action="{{ route('task.updateStatus', ['id' => $task->id]) }}" method="POST">
+                                    @csrf
+                                    <select name="status" onchange="this.form.submit()" class="form-control btn btn-outline-success">
+                                        <option value="1" {{ $task->completion_status_id == 1 ? 'selected' : '' }}>Pending</option>
+                                        <option value="2" {{ $task->completion_status_id == 2 ? 'selected' : '' }}>In Progress</option>
+                                        <option value="3" {{ $task->completion_status_id == 3 ? 'selected' : '' }}>Completed</option>
+                                        <option value="4" {{ $task->completion_status_id == 4 ? 'selected' : '' }}>Incomplete</option>
+                                    </select>
+                                </form>
+                            @endif
+                        </td>
+                        @if($task->completion_status_id == 3)
+                        <!-- Complete Task Button -->
+                        <button class="btn btn-outline-success">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Task Completed
+                        </button>
+                        @endif
+
                             <a href="{{ route('tasks.edit', $task->id) }}" class="btn btn-outline-primary">
                                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                 </svg>
                                 Edit Task
                             </a>
-                            
-                            <form action="{{ route('task.remove', ['id' => $task->id]) }}" method="POST" style="display: inline;">
-    @csrf
-    @method('DELETE')
-    <button type="submit" class="btn btn-outline-success">
-        <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-        Mark as Complete
-    </button>
+     
 </form>
+<a href="{{ route('tasks.createChild', ['parentTaskId' => $task->id]) }}" class="btn btn-primary">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+            </svg>
+            Add Child Task
+        </a>
+        
                         </div>
                         <div>
                             <a href="{{ route('viewing-all-tasks') }}" class="btn btn-primary">
@@ -854,6 +997,21 @@
             </div>
         </div>
     </div>
+
+
+
+    <!-- Success/Error Modal -->
+<div id="message-modal" class="modal" style="display: none;">
+    <div class="modal-content" style="position: fixed; top: 20px; right: 20px; width: 300px; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <div class="modal-header">
+            <span id="modal-title" style="font-weight: bold;"></span>
+            <button onclick="closeModal()" style="background: none; border: none; cursor: pointer; font-size: 1.25rem; color: #666;">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p id="modal-message"></p>
+        </div>
+    </div>
+</div>
      <!-- Delete Confirmation Modal -->
    <div id="deleteModal" class="modal">
     <div class="modal-content">
@@ -881,142 +1039,6 @@
 
 
     <script>
-         // Delete confirmation modal
-    const deleteButtons = document.querySelectorAll('.delete-btn');
-    const deleteModal = document.getElementById('deleteModal');
-    const deleteForm = document.getElementById('deleteForm');
-    const taskNameSpan = document.getElementById('taskName');
-    const cancelDelete = document.getElementById('cancelDelete');
-    const closeDeleteModal = document.getElementById('closeDeleteModal');
-    const taskList = document.getElementById('taskList');
-    const taskIdsInput = document.getElementById('taskIds');
-    let selectedIds=[];
-
-    deleteButtons.forEach(button => {
-    button.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const parentId = button.getAttribute('data-id');
-        const parentName = button.getAttribute('data-name');
-        document.getElementById('taskName').textContent = parentName;
-        const taskList = document.getElementById('taskList');
-        const taskIdsInput = document.getElementById('taskIdsInput'); // Ensure this hidden input exists
-
-        taskList.innerHTML = ''; // Clear previous list
-        selectedIds = [parentId]; // Start with the parent task ID
-        // Show loading overlay
-        const loadingOverlay = document.createElement('div');
-        loadingOverlay.id = 'loadingOverlay';
-        loadingOverlay.innerHTML = `<div class="spinner"></div> Loading...`;
-        document.body.appendChild(loadingOverlay);
-        document.body.style.pointerEvents = "none"; // Disable clicks
-
-        // Create Parent Task Checkbox
-        const parentTaskItem = document.createElement('li');
-        parentTaskItem.innerHTML = `
-            <input type="checkbox" checked data-id="${parentId}" class="task-checkbox"> 
-            ${parentName} (Parent)
-        `;
-        taskList.appendChild(parentTaskItem);
-        console.log(selectedIds);
-
-        // Fetch Child Tasks
-        fetch(`/task/${parentId}/children`)
-            .then(response => response.json())
-            .then(children => {
-
-                if (children.length > 0) {
-                    const childHeading = document.createElement('h4');
-                    childHeading.textContent = "Child Tasks:";
-                    taskList.appendChild(childHeading);
-                    children.forEach(child => {
-                        const listItem = document.createElement('li');
-                        listItem.innerHTML = `
-                            <input type="checkbox" checked data-id="${child.id}" class="task-checkbox"> 
-                            ${child.name} (Child)
-                        `;
-                        taskList.appendChild(listItem);
-                        selectedIds.push(String(child.id));
-                        console.log(selectedIds);
-                    });
-                } else {
-                    const noChildItem = document.createElement('li');
-                    noChildItem.textContent = "No child tasks associated with this task.";
-                    taskList.appendChild(noChildItem);
-                }
-                // Enable interaction again
-                document.body.style.pointerEvents = "auto";
-                loadingOverlay.remove(); // Remove loading effect
-
-                // Attach event listener AFTER checkboxes are created
-                taskList.addEventListener('change', (event) => {
-                    const checkbox = event.target;
-                    const taskId = checkbox.getAttribute('data-id');
-
-                    if (checkbox.checked) {
-                        if (!selectedIds.includes(taskId)) {
-                            selectedIds.push(taskId);
-                            console.log(selectedIds);
-                        }
-                    } else {
-                        selectedIds = selectedIds.filter(id => id !== taskId);
-                        console.log(selectedIds);
-                    }
-
-                    taskIdsInput.value = selectedIds.join(','); // Update hidden input
-                    console.log("Updated selected IDs:", selectedIds);
-                });
-            })
-            .catch(error => console.error("Error fetching child tasks:", error));
-
-        console.log("final",selectedIds);
-        // Set form action
-       // deleteForm.action = "{{ route('task.remove') }}" + "?id=" + selectedIds.join(',');
-
-        // Show modal
-        deleteModal.style.display = 'flex';
-        setTimeout(() => {
-            deleteModal.classList.add('active');
-        }, 10);
-    });
-});
-deleteForm.addEventListener("submit", function (e) {
-    e.preventDefault();
-
-        fetch("{{ route('task.remove') }}", {
-        method: "DELETE",
-        headers: {
-            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ id: selectedIds }), 
-    })
-        .then(response => response.json())
-        .then(data => {
-            console.log("Success:", data);
-            location.reload();
-        })
-        .catch(error => console.error("Error:", error));
-
-});
-
-
-    function closeDeleteDialog() {
-        deleteModal.classList.remove('active');
-        setTimeout(() => {
-            deleteModal.style.display = 'none';
-        }, 300);
-    }
-
-    cancelDelete.addEventListener('click', closeDeleteDialog);
-    closeDeleteModal.addEventListener('click', closeDeleteDialog);
-
-    deleteModal.addEventListener('click', (e) => {
-        if (e.target === deleteModal) {
-            closeDeleteDialog();
-        }
-    });
         // Toggle dropdown
         function toggleDropdown() {
             document.getElementById('dropdown-menu').classList.toggle('show');

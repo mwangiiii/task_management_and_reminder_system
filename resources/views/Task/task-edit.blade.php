@@ -41,6 +41,56 @@
             text-decoration: none;
             cursor: pointer;
         }
+        /* Loader Styles */
+        .loader {
+            --color: #a5a5b0;
+            --size: 70px;
+            width: var(--size);
+            height: var(--size);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: none; /* Initially hidden */
+        }
+        .loader span {
+            width: 100%;
+            height: 100%;
+            background-color: var(--color);
+            animation: keyframes-blink 0.6s alternate infinite linear;
+        }
+        .loader span:nth-child(1) {
+            animation-delay: 0ms;
+        }
+        .loader span:nth-child(2) {
+            animation-delay: 200ms;
+        }
+        .loader span:nth-child(3) {
+            animation-delay: 300ms;
+        }
+        .loader span:nth-child(4) {
+            animation-delay: 400ms;
+        }
+        .loader span:nth-child(5) {
+            animation-delay: 500ms;
+        }
+        .loader span:nth-child(6) {
+            animation-delay: 600ms;
+        }
+        @keyframes keyframes-blink {
+            0% {
+                opacity: 0.3;
+                transform: scale(0.5) rotate(5deg);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 flex items-center justify-center p-4 sm:p-6 md:p-8">
@@ -56,12 +106,22 @@
         </div>
     @endif
 
+    <!-- Loader -->
+    <div id="loader" class="loader">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
     <div class="w-full max-w-4xl shadow-lg rounded-lg bg-white">
         <div class="space-y-1 gradient-header text-white rounded-t-lg p-6">
             <h3 class="text-2xl font-bold tracking-tight text-center">Edit Task</h3>
         </div>
         <div class="p-6">
-            <form method="POST" action="{{ route('tasks.update', $task->id) }}" enctype="multipart/form-data" class="space-y-6">
+            <form method="POST" action="{{ route('tasks.update', $task->id) }}" enctype="multipart/form-data" class="space-y-6" id="taskForm">
                 @csrf
                 @method('PATCH')
                 
@@ -148,32 +208,30 @@
                         />
                     </div>
 
-                   <!-- Alert -->
-<div class="space-y-2">
-    <label for="task_alert" class="text-sm font-medium flex items-center">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-        Alert
-    </label>
-    <div id="alerts-container" class="space-y-2">
-        @if($task->alerts)
-            @foreach($task->alerts as $alert)
-                <input
-                    type="datetime-local"
-                    name="task_alerts[]"
-                    value="{{ $alert }}"
-                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-            @endforeach
-        @else
-            <!-- If no alerts exist, you can optionally add a placeholder or leave this empty -->
-        @endif
-    </div>
-    <button type="button" onclick="openModal()" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-        Add Alert
-    </button>
-</div>
+                    <!-- Alert -->
+                    <div class="space-y-2">
+                        <label for="task_alert" class="text-sm font-medium flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Alert
+                        </label>
+                        <div id="alerts-container" class="space-y-2">
+                            @if($task->alerts)
+                                @foreach($task->alerts as $alert)
+                                    <input
+                                        type="datetime-local"
+                                        name="task_alerts[]"
+                                        value="{{ $alert }}"
+                                        class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    />
+                                @endforeach
+                            @endif
+                        </div>
+                        <button type="button" onclick="openModal()" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            Add Alert
+                        </button>
+                    </div>
 
                     <!-- Cost -->
                     <div class="space-y-2">
@@ -347,6 +405,51 @@
                 alertsContainer.appendChild(newAlertInput);
                 closeModal();
             }
+        }
+
+        // Form submission with loader
+        const form = document.getElementById('taskForm');
+        const loader = document.getElementById('loader');
+
+        if (form && loader) {
+            form.addEventListener('submit', function(event) {
+                // Prevent the default form submission
+                event.preventDefault();
+
+                // Show the loader
+                loader.style.display = 'grid';
+
+                // Optionally, disable the submit button to prevent multiple submissions
+                const submitButton = form.querySelector('button[type="submit"]');
+                if (submitButton) {
+                    submitButton.disabled = true;
+                }
+
+                // Submit the form using Fetch API
+                fetch(form.action, {
+                    method: form.method,
+                    body: new FormData(form),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Task updated successfully:', data);
+                    window.location.href = "{{ route('viewing-all-tasks') }}"; // Redirect after success
+                })
+                .finally(() => {
+                    // Hide the loader
+                    loader.style.display = 'none';
+
+                    // Re-enable the submit button
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                    }
+                });
+            });
         }
         document.addEventListener("DOMContentLoaded", function () {
     let startDateInputs = document.getElementsByClassName("start_date");

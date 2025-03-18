@@ -16,7 +16,11 @@ class CompletionSeeder extends Seeder
             ['status' => 'Pending'],
             ['status' => 'In Progress'],
             ['status' => 'Completed'],
-            ['status' => 'Incompletce'],
+            ['status' => 'Incomplete'],
+            ['status' => 'Cancelled'],
+            ['status' => 'On Hold'],
+            ['status' => 'Awaiting Approval'],
+            ['status' => 'Rejected'],
         ];
 
         foreach ($statuses as $status) {

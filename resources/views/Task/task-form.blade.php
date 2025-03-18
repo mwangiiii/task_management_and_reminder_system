@@ -53,6 +53,36 @@
             border-radius: 3px;
         }
         
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            width: 300px;
+            text-align: center;
+        }
+
+        .modal-content .close {
+            float: right;
+            cursor: pointer;
+        }
+
+        .modal-content button {
+            margin: 10px 5px;
+        }
+        
         .form-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -216,33 +246,66 @@
                 padding: 20px;
             }
         }
-    /* Styling for loading overlay */
-    #loadingOverlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        color: white;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        z-index: 9999;
-    }
-    .spinner {
-        width: 50px;
-        height: 50px;
-        border: 5px solid #f3f3f3;
-        border-top: 5px solid #3498db;
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-    }
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
+
+        /* From Uiverse.io by cosnametv */ 
+        .loader {
+            --color: #a5a5b0;
+            --size: 70px;
+            width: var(--size);
+            height: var(--size);
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+            display: none; /* Initially hidden */
+        }
+
+        .loader span {
+            width: 100%;
+            height: 100%;
+            background-color: var(--color);
+            animation: keyframes-blink 0.6s alternate infinite linear;
+        }
+
+        .loader span:nth-child(1) {
+            animation-delay: 0ms;
+        }
+
+        .loader span:nth-child(2) {
+            animation-delay: 200ms;
+        }
+
+        .loader span:nth-child(3) {
+            animation-delay: 300ms;
+        }
+
+        .loader span:nth-child(4) {
+            animation-delay: 400ms;
+        }
+
+        .loader span:nth-child(5) {
+            animation-delay: 500ms;
+        }
+
+        .loader span:nth-child(6) {
+            animation-delay: 600ms;
+        }
+
+        @keyframes keyframes-blink {
+            0% {
+                opacity: 0.3;
+                transform: scale(0.5) rotate(5deg);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
     </style>
 </head>
 <body>
@@ -301,7 +364,7 @@
                 
                 <div class="form-group">
                     <label for="task_cost">Cost</label>
-                    <input type="number" id="task_cost" name="task_cost" min="0" step="0.01" class="form-control" required value="0">
+                    <input type="number" id="task_cost" name="task_cost" min="0" step="0.01" class="form-control">
                 </div>
 
                 
@@ -313,15 +376,12 @@
                 <div class="form-group">
                     <label for="task_completion_status">Status</label>
                     <select id="task_completion_status" name="task_completion_status" class="form-control" required>
-                        @if(count($completions) > 0)
-                            @foreach($completions as $index => $completion)
-                                <option value="{{ $completion->id }}" {{ $index === 0 ? 'selected' : '' }}>
-                                    {{ $completion->status }}
-                                </option>
-                            @endforeach
-                        @else
-                            <option value="" selected>No statuses available</option>
-                        @endif
+                        <option value="{{ $default_completion_status_in_view->id }}" selected>
+                            {{ $default_completion_status_in_view->status }}
+                        </option>
+                        @foreach($other_completion_status_in_view as $completion)                         
+                            <option value="{{ $completion->id }}">{{ $completion->status }}</option>
+                        @endforeach
                     </select>
 
                 </div>
@@ -340,8 +400,6 @@
                         <button type="button" id="addRecurrencyBtn" class="btn btn-success btn-sm mt-2">Add</button>
                     </div>
                 </div>
-                
-                
                 
                 <div class="form-group">
                     <label for="task_uploads">Uploads</label>
@@ -362,19 +420,15 @@
                 <button type="submit" class="btn btn-primary">
                     <i class="fas fa-plus"></i> {{ isset($parentTask) ? 'Create Child Task' : 'Create Task' }}
                 </button>
+
                 <a href="{{ route('viewing-all-tasks') }}">
-                    <button type="button" class="btn btn-secondary" onclick="handleGoBack(event)">
+                    <button type="button" class="btn btn-secondary" onclick="window.history.back()">
                         <i class="fas fa-arrow-left"></i> Go Back
                     </button>
                 </a>
             </div>
         </form>
     </div>
-    <!-- Loading Overlay -->
-<div id="loadingOverlay">
-    <div class="spinner"></div>
-    <p>Loading... Please wait</p>
-</div>
 
     <!-- Modal for Adding Alerts -->
     <div id="alertModal" class="modal">
@@ -480,6 +534,26 @@ $(document).ready(function () {
 
 </script>
 
+    <!-- Offer Modal for Due Date Alert -->
+    <div id="offerModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeOfferModal()">&times;</span>
+            <p id="offerModalMessage"></p>
+            <button id="offerModalYes" class="btn btn-primary">Yes</button>
+            <button id="offerModalNo" class="btn btn-secondary">No</button>
+        </div>
+    </div>
+
+    <!-- Loader -->
+    <div id="loader" class="loader">
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
     <script>
 document.addEventListener("DOMContentLoaded", function () {
     let startDateInputs = document.getElementsByClassName("start_date");
@@ -532,47 +606,348 @@ document.addEventListener("DOMContentLoaded", function () {
             document.getElementById('alertModal').style.display = 'none';
         }
 
-        // Add Alert
-        function addAlert() {
-            const newAlert = document.getElementById('newAlert').value;
-            if (newAlert) {
-                const alertsContainer = document.getElementById('alerts-container');
-                const newAlertInput = document.createElement('input');
-                newAlertInput.type = 'datetime-local';
-                newAlertInput.name = 'task_alerts[]';
-                newAlertInput.value = newAlert;
-                newAlertInput.className = 'form-control w-full mt-2';
-                alertsContainer.appendChild(newAlertInput);
-                closeModal();
+        // Open Offer Modal for Due Date Alert
+        function openOfferModal(dueDateTime) {
+            const offerModal = document.getElementById('offerModal');
+            const offerModalMessage = document.getElementById('offerModalMessage');
+            
+            // Set the message in the modal
+            offerModalMessage.textContent = `Would you like to add an alert for the task due date (${formatDateTime(dueDateTime)})?`;
+            
+            // Set up the "Yes" button to add the due date alert
+            const yesButton = document.getElementById('offerModalYes');
+            yesButton.onclick = function() {
+                addDueDateAlert(dueDateTime);
+                closeOfferModal();
+            };
+            
+            // Set up the "No" button to simply close the modal
+            const noButton = document.getElementById('offerModalNo');
+            noButton.onclick = closeOfferModal;
+            
+            // Display the modal
+            offerModal.style.display = 'block';
+        }
+
+        // Close Offer Modal
+        function closeOfferModal() {
+            document.getElementById('offerModal').style.display = 'none';
+        }
+
+        // Add Due Date Alert
+        function addDueDateAlert(dueDateTime) {
+            const alertsContainer = document.getElementById('alerts-container');
+            
+            // Create alert item container
+            const alertElement = document.createElement('div');
+            alertElement.className = 'alert-item bg-light p-2 rounded border d-flex justify-content-between align-items-center mt-2';
+            
+            alertElement.innerHTML = `
+                <div>
+                    <span class="badge bg-danger">Due Time</span>
+                    <span>Alert at ${formatDateTime(dueDateTime)}</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeAlert(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            // Add hidden input for form submission
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'task_alerts[]';
+            
+            // Format the date-time value as Y-m-d\TH:i
+            const formattedDateTime = formatDateTimeForSubmission(dueDateTime);
+            hiddenInput.value = formattedDateTime;
+            
+            alertElement.appendChild(hiddenInput);
+            alertsContainer.appendChild(alertElement);
+            
+            // Schedule notification
+            const now = new Date();
+            const timeUntilAlert = dueDateTime.getTime() - now.getTime();
+            if (timeUntilAlert > 0) {
+                setTimeout(() => {
+                    const taskNameElement = document.querySelector('input[name="task_name"]');
+                    const taskName = taskNameElement ? taskNameElement.value : 'Your task';
+                    
+                    if (Notification.permission === "granted") {
+                        showNotification(taskName, dueDateTime, "Task Due Now");
+                    } else if (Notification.permission !== "denied") {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === "granted") {
+                                showNotification(taskName, dueDateTime, "Task Due Now");
+                            }
+                        });
+                    }
+                }, timeUntilAlert);
             }
         }
 
-        // File Input Enhancement
-        document.addEventListener("DOMContentLoaded", function () {
-            const fileInput = document.getElementById('task_uploads');
-            const fileLabel = document.querySelector('.file-upload span');
+        // Add custom alert from modal
+        function addAlert() {
+            const newAlert = document.getElementById('newAlert').value;
+            const dueDateInput = document.getElementById('due_date');
             
-            fileInput.addEventListener('change', function() {
-                fileLabel.textContent = fileInput.files.length > 0 
-                    ? `${fileInput.files.length} file(s) selected` 
-                    : 'Click to upload files';
+            if (newAlert) {
+                const alertDateTime = new Date(newAlert);
+                const dueDateTime = dueDateInput.value ? new Date(dueDateInput.value) : null;
+                
+                // Check if alert time is after due date and confirm with user
+                if (dueDateTime && alertDateTime > dueDateTime) {
+                    const confirmPost = confirm("This alert is set after the task due date. Do you want to continue?");
+                    if (!confirmPost) {
+                        return; // User canceled, exit the function
+                    }
+                }
+                
+                const alertsContainer = document.getElementById('alerts-container');
+                
+                // Create alert item container
+                const alertElement = document.createElement('div');
+                alertElement.className = 'alert-item bg-light p-2 rounded border d-flex justify-content-between align-items-center mt-2';
+                
+                // Determine if this is a post-due alert
+                const isPostDue = dueDateTime && alertDateTime > dueDateTime;
+                const badgeClass = isPostDue ? "bg-warning" : "bg-primary";
+                const badgeText = isPostDue ? "Post-Due" : "Custom";
+                
+                alertElement.innerHTML = `
+                    <div>
+                        <span class="badge ${badgeClass}">${badgeText}</span>
+                        <span>Alert at ${formatDateTime(alertDateTime)}</span>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-danger" onclick="removeAlert(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                
+                // Add hidden input for form submission
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.name = 'task_alerts[]';
+                
+                // Format the date-time value as Y-m-d\TH:i
+                const formattedDateTime = formatDateTimeForSubmission(alertDateTime);
+                hiddenInput.value = formattedDateTime;
+                
+                alertElement.appendChild(hiddenInput);
+                alertsContainer.appendChild(alertElement);
+                closeModal();
+                
+                // Schedule the notification
+                const now = new Date();
+                const timeUntilAlert = alertDateTime.getTime() - now.getTime();
+                if (timeUntilAlert > 0) {
+                    scheduleCustomNotification(alertDateTime, isPostDue);
+                }
+            }
+        }
+
+        // Remove an alert
+        function removeAlert(button) {
+            const alertItem = button.closest('.alert-item');
+            if (alertItem) {
+                alertItem.remove();
+            }
+        }
+
+        // Schedule a custom notification
+        function scheduleCustomNotification(alertDateTime, isPostDue) {
+            const now = new Date();
+            const timeUntilAlert = alertDateTime.getTime() - now.getTime();
+            
+            if (timeUntilAlert > 0) {
+                setTimeout(() => {
+                    const taskNameElement = document.querySelector('input[name="task_name"]');
+                    const taskName = taskNameElement ? taskNameElement.value : 'Your task';
+                    
+                    if (Notification.permission === "granted") {
+                        showNotification(taskName, alertDateTime, isPostDue ? "Post-due reminder" : "Custom alert");
+                    } else if (Notification.permission !== "denied") {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === "granted") {
+                                showNotification(taskName, alertDateTime, isPostDue ? "Post-due reminder" : "Custom alert");
+                            }
+                        });
+                    }
+                }, timeUntilAlert);
+            }
+        }
+
+        // Show a notification
+        function showNotification(taskName, dateTime, alertType) {
+            const notification = new Notification("Task Reminder", {
+                body: `${alertType}: ${taskName} (${formatDateTime(dateTime)})`,
+                icon: "/path/to/notification-icon.png" // Replace with your icon path
             });
+            
+            notification.onclick = function() {
+                window.focus();
+                this.close();
+            };
+        }
+
+        // Format date-time for submission (Y-m-d\TH:i)
+        function formatDateTimeForSubmission(dateObj) {
+            const year = dateObj.getFullYear();
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            const hours = String(dateObj.getHours()).padStart(2, '0');
+            const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+            
+            return `${year}-${month}-${day}T${hours}:${minutes}`;
+        }
+
+        // Format date for display
+        function formatDateTime(dateObj) {
+            return dateObj.toLocaleString('en-US', { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric',
+                hour: '2-digit', 
+                minute: '2-digit'
+            });
+        }
+
+        // Set up automatic alerts 5 minutes before the chosen start time
+        function setupTaskAlerts() {
+            // Get the start date input element
+            const startDateInput = document.getElementById('start_date');
+            
+            // Add an event listener for when the start date changes
+            startDateInput.addEventListener('change', function() {
+                // Get the selected start date and time
+                const startDateTime = new Date(this.value);
+                
+                // Calculate the alert time (5 minutes before start time)
+                const alertDateTime = new Date(startDateTime.getTime() - (5 * 60 * 1000));
+                
+                // Create an alert entry and add it to the alerts container
+                addAlertToContainer(alertDateTime, startDateTime);
+            });
+            
+            // Also add listener for due date to offer a due date alert
+            const dueDateInput = document.getElementById('due_date');
+            if (dueDateInput) {
+                dueDateInput.addEventListener('change', function() {
+                    const dueDateTime = new Date(this.value);
+                    openOfferModal(dueDateTime); // Use modal instead of confirm
+                });
+            }
+        }
+
+        // Add 5-minute before alert to the container
+        function addAlertToContainer(alertDateTime, startDateTime) {
+            // Format dates for display
+            const alertTimeFormatted = formatDateTime(alertDateTime);
+            const startTimeFormatted = formatDateTime(startDateTime);
+            
+            // Create the alert element
+            const alertElement = document.createElement('div');
+            alertElement.className = 'alert-item bg-light p-2 rounded border d-flex justify-content-between align-items-center mt-2';
+            alertElement.innerHTML = `
+                <div>
+                    <span class="badge bg-info">5 min before</span>
+                    <span>Alert at ${alertTimeFormatted}</span>
+                </div>
+                <button type="button" class="btn btn-sm btn-danger" onclick="removeAlert(this)">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            // Add a hidden input to store the alert data for form submission
+            const hiddenInput = document.createElement('input');
+            hiddenInput.type = 'hidden';
+            hiddenInput.name = 'task_alerts[]';
+            
+            // Format the date-time value as Y-m-d\TH:i
+            const formattedDateTime = formatDateTimeForSubmission(alertDateTime);
+            hiddenInput.value = formattedDateTime;
+            
+            alertElement.appendChild(hiddenInput);
+            
+            // Add the alert to the container
+            const alertsContainer = document.getElementById('alerts-container');
+            
+            // Check if this alert already exists
+            const existingAlerts = alertsContainer.querySelectorAll('.alert-item');
+            let alertExists = false;
+            
+            existingAlerts.forEach(alert => {
+                if (alert.querySelector('span').textContent.includes(alertTimeFormatted)) {
+                    alertExists = true;
+                }
+            });
+            
+            if (!alertExists) {
+                alertsContainer.appendChild(alertElement);
+                
+                // Schedule notification
+                scheduleNotification(alertDateTime, startDateTime);
+            }
+        }
+
+        // Schedule notification for 5 minutes before start time
+        function scheduleNotification(alertDateTime, startDateTime) {
+            const now = new Date();
+            const timeUntilAlert = alertDateTime.getTime() - now.getTime();
+            
+            if (timeUntilAlert > 0) {
+                setTimeout(() => {
+                    const taskNameElement = document.querySelector('input[name="task_name"]');
+                    const taskName = taskNameElement ? taskNameElement.value : 'Your task';
+                    
+                    if (Notification.permission === "granted") {
+                        showNotification(taskName, startDateTime, "Starting in 5 minutes");
+                    } else if (Notification.permission !== "denied") {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === "granted") {
+                                showNotification(taskName, startDateTime, "Starting in 5 minutes");
+                            }
+                        });
+                    }
+                }, timeUntilAlert);
+            }
+        }
+
+        // File Input Enhancement and other initialization
+        document.addEventListener("DOMContentLoaded", function () {
+            // Set up the automatic 5-min alert functionality
+            setupTaskAlerts();
+            
+            // File input enhancement
+            const fileInput = document.getElementById('task_uploads');
+            if (fileInput) {
+                const fileLabel = document.querySelector('.file-upload span');
+                
+                fileInput.addEventListener('change', function() {
+                    fileLabel.textContent = fileInput.files.length > 0 
+                        ? `${fileInput.files.length} file(s) selected` 
+                        : 'Click to upload files';
+                });
+            }
             
             // DateTime Constraints
             const now = new Date().toISOString().slice(0, 16);
             const startDateInput = document.getElementById("start_date");
             const dueDateInput = document.getElementById("due_date");
+            
+            if (startDateInput && dueDateInput) {
+                startDateInput.min = now;
+
+                startDateInput.addEventListener("change", function () {
+                    dueDateInput.min = startDateInput.value;
+                });
+            }
+            
+            // Parent task budget logic
             const parentTaskSelect = document.getElementById("parent_task");
             const budgetField = document.getElementById("budget");
             const budgetContainer = document.getElementById("budget_container");
 
-            startDateInput.min = now;
-
-            startDateInput.addEventListener("change", function () {
-                dueDateInput.min = startDateInput.value;
-            });
-
-            if (parentTaskSelect) {
+            if (parentTaskSelect && budgetField && budgetContainer) {
                 parentTaskSelect.addEventListener("change", function () {
                     if (parentTaskSelect.value) {
                         budgetContainer.style.display = "none";
@@ -583,6 +958,60 @@ document.addEventListener("DOMContentLoaded", function () {
                         budgetField.required = true;
                     }
                 });
+            }
+            
+            // Form submission loading indicator
+            const form = document.querySelector("form");
+const loader = document.getElementById("loader");
+
+if (form && loader) {
+    form.addEventListener("submit", function (event) {
+        // Prevent the default form submission
+        event.preventDefault();
+
+        // Show the loader
+        loader.style.display = "grid";
+
+        // Optionally, disable the submit button to prevent multiple submissions
+        const submitButton = form.querySelector("button[type='submit']");
+        if (submitButton) {
+            submitButton.disabled = true;
+        }
+
+        // Submit the form using Fetch API
+        fetch(form.action, {
+            method: form.method,
+            body: new FormData(form),
+            headers: {
+                Accept: "application/json", // Ensure the server knows we expect JSON
+            },
+        })
+            .then((response) => {
+                // Check if the response is OK (status code 200-299)
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+                return response.json(); // Parse the JSON response
+            })
+            .then((data) => {
+                // Handle the response data (optional)
+                console.log("Task created successfully:", data);
+            })
+            .finally(() => {
+                // Hide the loader
+                loader.style.display = "none";
+
+                // Re-enable the submit button
+                if (submitButton) {
+                    submitButton.disabled = false;
+                }
+            });
+    });
+}
+
+            // Request notification permission on page load
+            if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+                Notification.requestPermission();
             }
         });
     </script>
