@@ -485,10 +485,11 @@ public function update(Request $request, $id)
 
 
     public function showOneTask($id)
-{
+{   $taskChild = Task::find($id);
     // Fetch the task with its related uploads, user, completion status, and child tasks
-    $task = Task::with(['uploads', 'user', 'completionStatus', 'childTasks.childTasks'])->findOrFail($id);
+    $task = Task::with(['uploads', 'user', 'completionStatus', 'childTasks'])->findOrFail($id);
     $completionStatus = CompletionStatus::all();
+    Log::info($task->childTasks);
 
     // Pass the task data to the view
     return view('Task.show', compact('task','completionStatus'));
@@ -863,6 +864,67 @@ public function getChildren($id)
 
     return response()->json($children);
 }
+public function startTask($id)
+{
+    $task = Task::findOrFail($id);
+    $task->completion_status_id = 2; // In Progress
+    $task->save();
+
+    return redirect()->back()->with('success', 'Task started successfully.');
+}
+
+// Update task status from the dropdown
+public function updateStatus(Request $request, $id)
+{
+    $task = Task::findOrFail($id);
+    $task->completion_status_id = $request->status;
+    $task->save();
+
+    return redirect()->back()->with('success', 'Task status updated successfully.');
+}
+public function storeCategory(Request $request)
+{
+    $request->validate([
+        'type' => 'required|string|unique:categories,type'
+    ]);
+
+    $category = Category::create(['type' => $request->type]);
+
+    return response()->json([
+        'id' => $category->id,
+        'type' => $category->type,
+        'message' => 'Category added successfully!'
+    ]);
+}
+public function storeRecurrency(Request $request)
+{
+    $request->validate([
+        'frequency' => 'required|string|unique:recurrencies,frequency'
+    ]);
+    
+
+    $recurrency = Recurrency::create(['frequency' => $request->frequency]);
+    Log::info($recurrency);
+
+    return response()->json([
+        'id' => $recurrency->id,
+        'frequency' => $recurrency->frequency,
+        'message' => 'Recurrency added successfully!'
+    ]);
+}
+public function processPayment(Request $request)
+{
+    $request->validate([
+        'currency' => 'required|string|in:KES,USD,EUR,GBP,NGN',
+    ]);
+
+    $currency = $request->currency;
+    Log::info($currency);
+
+    return back()->with('success', "Payment will be processed in $currency.");
+}
+
+
 
 
     

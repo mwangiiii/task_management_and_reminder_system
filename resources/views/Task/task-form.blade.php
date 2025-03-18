@@ -270,7 +270,12 @@
                         @foreach($categories as $category)
                             <option value="{{ $category->id }}">{{ $category->type }}</option>
                         @endforeach
+                        <option value="add_new">+ Add New Category</option>
                     </select>
+                    <div id="newCategoryInput" style="display: none; margin-top: 10px;">
+                        <input type="text" id="newCategoryName" class="form-control" placeholder="Enter new category">
+                        <button type="button" id="addCategoryBtn" class="btn btn-success btn-sm mt-2">Add</button>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -328,7 +333,12 @@
                         @foreach($recurrencies as $recurrency)
                             <option value="{{ $recurrency->id }}">{{ $recurrency->frequency }}</option>
                         @endforeach
+                        <option value="add_new_r">+ Add New Recurrency</option>
                     </select>
+                    <div id="newRecurrencyInput" style="display: none; margin-top: 10px;">
+                        <input type="text" id="newRecurrencyName" class="form-control" placeholder="Enter new recurrency">
+                        <button type="button" id="addRecurrencyBtn" class="btn btn-success btn-sm mt-2">Add</button>
+                    </div>
                 </div>
                 
                 
@@ -377,6 +387,98 @@
             </button>
         </div>
     </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+$(document).ready(function () {
+    $('#task_recurrency').change(function () {
+        if ($(this).val() === 'add_new_r') {
+            $('#newRecurrencyInput').show(); 
+        } else {
+            $('#newRecurrencyInput').hide(); 
+        }
+    });
+
+    $('#addRecurrencyBtn').click(function () {
+        var recurrencyName = $('#newRecurrencyName').val().trim();
+
+        if (recurrencyName === '') {
+            alert('Please enter a recurrency name.');
+            return;
+        }
+
+        $.ajax({
+            url: "{{ route('recurrency.store') }}",
+            type: "POST",
+            data: {
+                frequency: recurrencyName, 
+                _token: "{{ csrf_token() }}"
+            },
+            success: function (response) {
+            $('#task_recurrency option[value="add_new_r"]').before(
+                $('<option>', {
+                    value: response.id,
+                    text: response.frequency, 
+                    selected: true
+                })
+            );
+
+                $('#newRecurrencyInput').hide();
+                $('#newRecurrencyName').val('');
+            },
+            error: function (xhr) {
+                alert(xhr.responseJSON.message);
+            }
+        });
+    });
+});
+
+
+</script>
+<script>
+$(document).ready(function () {
+    $('#task_category').change(function () {
+        if ($(this).val() === 'add_new') {
+            $('#newCategoryInput').show();  
+        } else {
+            $('#newCategoryInput').hide(); 
+        }
+    });
+
+    $('#addCategoryBtn').click(function () {
+        var categoryName = $('#newCategoryName').val().trim();
+
+        if (categoryName === '') {
+            alert('Please enter a category name.');
+            return;
+        }
+
+        $.ajax({
+            url: "{{ route('categories.store') }}",
+            type: "POST",
+            data: {
+                type: categoryName, 
+                _token: "{{ csrf_token() }}"
+            },
+            success: function (response) {
+                $('#task_category option[value="add_new"]').before(
+                    $('<option>', {
+                        value: response.id,
+                        text: response.type,
+                        selected: true
+                    })
+                );
+                $('#newCategoryInput').hide();
+                $('#newCategoryName').val('');
+            },
+            error: function (xhr) {
+                alert(xhr.responseJSON.message);
+            }
+        });
+    });
+});
+
+
+</script>
 
     <script>
 document.addEventListener("DOMContentLoaded", function () {
@@ -399,15 +501,16 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     setMinDateTime();
-});
-
-        document.getElementById('taskForm').addEventListener('submit', function (event) {
+    
+    document.getElementById('taskForm').addEventListener('submit', function (event) {
+            handleGoBack(event);
         // Show loading overlay
         document.getElementById('loadingOverlay').style.display = 'flex';
 
         // Disable button to prevent multiple submissions
         document.getElementById('submitButton').disabled = true;
     });
+});
             function handleGoBack(event) {
         event.preventDefault(); // Prevent default navigation
 

@@ -125,7 +125,7 @@
                             name="task_start_date"
                             type="datetime-local"
                             value="{{ old('task_start_date', $task->start_date) }}"
-                            class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="start_date w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             required
                         />
                     </div>
@@ -302,7 +302,7 @@
             <input
                 id="newAlert"
                 type="datetime-local"
-                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                class="start_date w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button 
                 type="button" 
@@ -315,6 +315,7 @@
     </div>
 
     <script>
+
         // Auto-hide the notification after 5 seconds
         document.addEventListener('DOMContentLoaded', function() {
             const notification = document.getElementById('notification');
@@ -347,6 +348,27 @@
                 closeModal();
             }
         }
+        document.addEventListener("DOMContentLoaded", function () {
+    let startDateInputs = document.getElementsByClassName("start_date");
+
+    function setMinDateTime() {
+        let now = new Date();
+        let year = now.getFullYear();
+        let month = String(now.getMonth() + 1).padStart(2, "0");
+        let day = String(now.getDate()).padStart(2, "0");
+        let hours = String(now.getHours()).padStart(2, "0");
+        let minutes = String(now.getMinutes()).padStart(2, "0");
+
+        let minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        // Loop through all elements and set min attribute
+        for (let input of startDateInputs) {
+            input.min = minDateTime;
+        }
+    }
+
+    setMinDateTime();
+});
     </script>
 </body>
 </html>

@@ -20,9 +20,29 @@
         
 
         <div class="add-task-btn">
+        <div style="display: flex; gap: 15px;">
             <a href="{{ route('creating-form') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Add Task
             </a>
+            <form action="{{ route('process-payment') }}" method="POST">
+                @csrf
+                <label for="currency">Choose Currency</label>
+                <select id="currency" name="currency" class="form-control" required>
+                    <option value="KES">Kenyan Shilling (KES)</option>
+                    <option value="USD">US Dollar (USD)</option>
+                    <option value="EUR">Euro (EUR)</option>
+                    <option value="GBP">British Pound (GBP)</option>
+                    <option value="NGN">Nigerian Naira (NGN)</option>
+                </select>
+
+                <button type="submit" class="btn btn-primary mt-3">
+                    <i class="fas fa-check"></i> Submit
+                </button>
+            </form>
+
+        </div>
+
+        </div>
         </div>
         
         <div class="filter-sort-controls">
@@ -115,10 +135,6 @@
                     <button class="btn btn-danger btn-sm delete-btn" data-id="{{ $task->id }}" data-name="{{ $task->name }}">
         <i class="fas fa-trash"></i>
     </button>
-
-                    <a href="{{ route('tasks.createChild', ['parentTaskId' => $task->id]) }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus"></i> Add Child
-                    </a>
                 </td>
             </tr>
             @foreach (optional($task->children) as $child)
@@ -236,6 +252,29 @@
 </div>
 
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    fetch("https://ipapi.co/json/")
+        .then(response => response.json())
+        .then(data => {
+            let country = data.country_code;
+            let currencySelect = document.getElementById("currency");
+
+            const currencyMap = {
+                "KE": "KES", // Kenya
+                "US": "USD", // United States
+                "GB": "GBP", // United Kingdom
+                "NG": "NGN", // Nigeria
+                "EU": "EUR", // European Union
+            };
+
+            if (currencyMap[country]) {
+                currencySelect.value = currencyMap[country];
+            }
+        })
+        .catch(error => console.log("Error fetching location:", error));
+});
+</script>
 
 <script>
     // Task details functionality

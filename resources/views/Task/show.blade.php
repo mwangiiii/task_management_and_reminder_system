@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/loading.css') }}">
     <title>Task Details</title>
     <style>
         :root {
@@ -516,6 +517,31 @@
                             </a>
                             <h1 class="task-title">{{ $task->name }}</h1>
                         </div>
+                        <div>
+                        <td>
+                            @if($task->completion_status_id == 1) 
+                                <!-- Start Task Button (if status is Pending) -->
+                                <form action="{{ route('task.start', ['id' => $task->id]) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-play"></i> Start Task
+                                    </button>
+                                </form>
+                            @else 
+                                <!-- Status Dropdown -->
+                                <form action="{{ route('task.updateStatus', ['id' => $task->id]) }}" method="POST">
+                                    @csrf
+                                    <select name="status" onchange="this.form.submit()" class="form-control">
+                                        <option value="1" {{ $task->completion_status_id == 1 ? 'selected' : '' }}>Pending</option>
+                                        <option value="2" {{ $task->completion_status_id == 2 ? 'selected' : '' }}>In Progress</option>
+                                        <option value="3" {{ $task->completion_status_id == 3 ? 'selected' : '' }}>Completed</option>
+                                        <option value="4" {{ $task->completion_status_id == 4 ? 'selected' : '' }}>Incomplete</option>
+                                    </select>
+                                </form>
+                            @endif
+                        </td>
+
+                        </div>
                         <div class="status-actions">
                             <!-- Status Badge -->
                             <span class="status-badge status-in-progress">{{ $task->completionStatus->name }}</span>
@@ -653,11 +679,8 @@
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
                                 <button class="btn btn-danger btn-sm delete-btn" data-id="{{ $childTask->id }}" data-name="{{ $childTask->name }}">
-                                    <i class="fas fa-trash"></i>
+                                    <i class="fas fa-trash"></i>Delete
                                 </button>
-                                <a href="{{ route('tasks.createChild', ['parentTaskId' => $childTask->id]) }}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-plus"></i> Add Child
-                                </a>
                             </td>
                         </tr>
 
@@ -684,9 +707,14 @@
                                         <a href="{{ route('tasks.edit', $subTask->id) }}" class="btn btn-primary btn-sm">
                                             <i class="fas fa-edit"></i> Edit
                                         </a>
-                                        <button class="btn btn-danger btn-sm delete-btn" data-id="{{ $subTask->id }}" data-name="{{ $subTask->name }}">
+                                        </a>
+                                            <a href="#">
+                                            <button class="btn btn-danger btn-sm delete-btn"
+                                            data-id="{{ $task->id }}"
+                                            data-name="{{ $task->name }}">
                                             <i class="fas fa-trash"></i>
-                                        </button>
+                                            </button>
+                                            </a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -732,6 +760,11 @@
                                 </svg>
                                 Back to All Tasks
                             </a>
+                        </div>
+                        <div>
+                        <a href="{{ route('tasks.createChild', ['parentTaskId' => $task->id]) }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Add Child Task
+                    </a>
                         </div>
                     </div>
                 </div>
@@ -821,8 +854,169 @@
             </div>
         </div>
     </div>
+     <!-- Delete Confirmation Modal -->
+   <div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Confirm Deletion</h3>
+            <button class="modal-close" id="closeDeleteModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete task "<span id="taskName"></span>"?</p>
+            <p>This action cannot be undone.</p>
+            
+            <h4>Parent Task:</h4>
+            <ul id="taskList"></ul>
+        </div>
+        <div class="modal-footer">
+            <button id="cancelDelete" class="btn btn-secondary">Cancel</button>
+            <form id="deleteForm" action="" method="POST">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger">Delete Task</button>
+            </form>
+        </div>
+    </div>
+</div>
+
 
     <script>
+         // Delete confirmation modal
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+    const deleteModal = document.getElementById('deleteModal');
+    const deleteForm = document.getElementById('deleteForm');
+    const taskNameSpan = document.getElementById('taskName');
+    const cancelDelete = document.getElementById('cancelDelete');
+    const closeDeleteModal = document.getElementById('closeDeleteModal');
+    const taskList = document.getElementById('taskList');
+    const taskIdsInput = document.getElementById('taskIds');
+    let selectedIds=[];
+
+    deleteButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const parentId = button.getAttribute('data-id');
+        const parentName = button.getAttribute('data-name');
+        document.getElementById('taskName').textContent = parentName;
+        const taskList = document.getElementById('taskList');
+        const taskIdsInput = document.getElementById('taskIdsInput'); // Ensure this hidden input exists
+
+        taskList.innerHTML = ''; // Clear previous list
+        selectedIds = [parentId]; // Start with the parent task ID
+        // Show loading overlay
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'loadingOverlay';
+        loadingOverlay.innerHTML = `<div class="spinner"></div> Loading...`;
+        document.body.appendChild(loadingOverlay);
+        document.body.style.pointerEvents = "none"; // Disable clicks
+
+        // Create Parent Task Checkbox
+        const parentTaskItem = document.createElement('li');
+        parentTaskItem.innerHTML = `
+            <input type="checkbox" checked data-id="${parentId}" class="task-checkbox"> 
+            ${parentName} (Parent)
+        `;
+        taskList.appendChild(parentTaskItem);
+        console.log(selectedIds);
+
+        // Fetch Child Tasks
+        fetch(`/task/${parentId}/children`)
+            .then(response => response.json())
+            .then(children => {
+
+                if (children.length > 0) {
+                    const childHeading = document.createElement('h4');
+                    childHeading.textContent = "Child Tasks:";
+                    taskList.appendChild(childHeading);
+                    children.forEach(child => {
+                        const listItem = document.createElement('li');
+                        listItem.innerHTML = `
+                            <input type="checkbox" checked data-id="${child.id}" class="task-checkbox"> 
+                            ${child.name} (Child)
+                        `;
+                        taskList.appendChild(listItem);
+                        selectedIds.push(String(child.id));
+                        console.log(selectedIds);
+                    });
+                } else {
+                    const noChildItem = document.createElement('li');
+                    noChildItem.textContent = "No child tasks associated with this task.";
+                    taskList.appendChild(noChildItem);
+                }
+                // Enable interaction again
+                document.body.style.pointerEvents = "auto";
+                loadingOverlay.remove(); // Remove loading effect
+
+                // Attach event listener AFTER checkboxes are created
+                taskList.addEventListener('change', (event) => {
+                    const checkbox = event.target;
+                    const taskId = checkbox.getAttribute('data-id');
+
+                    if (checkbox.checked) {
+                        if (!selectedIds.includes(taskId)) {
+                            selectedIds.push(taskId);
+                            console.log(selectedIds);
+                        }
+                    } else {
+                        selectedIds = selectedIds.filter(id => id !== taskId);
+                        console.log(selectedIds);
+                    }
+
+                    taskIdsInput.value = selectedIds.join(','); // Update hidden input
+                    console.log("Updated selected IDs:", selectedIds);
+                });
+            })
+            .catch(error => console.error("Error fetching child tasks:", error));
+
+        console.log("final",selectedIds);
+        // Set form action
+       // deleteForm.action = "{{ route('task.remove') }}" + "?id=" + selectedIds.join(',');
+
+        // Show modal
+        deleteModal.style.display = 'flex';
+        setTimeout(() => {
+            deleteModal.classList.add('active');
+        }, 10);
+    });
+});
+deleteForm.addEventListener("submit", function (e) {
+    e.preventDefault();
+
+        fetch("{{ route('task.remove') }}", {
+        method: "DELETE",
+        headers: {
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ id: selectedIds }), 
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log("Success:", data);
+            location.reload();
+        })
+        .catch(error => console.error("Error:", error));
+
+});
+
+
+    function closeDeleteDialog() {
+        deleteModal.classList.remove('active');
+        setTimeout(() => {
+            deleteModal.style.display = 'none';
+        }, 300);
+    }
+
+    cancelDelete.addEventListener('click', closeDeleteDialog);
+    closeDeleteModal.addEventListener('click', closeDeleteDialog);
+
+    deleteModal.addEventListener('click', (e) => {
+        if (e.target === deleteModal) {
+            closeDeleteDialog();
+        }
+    });
         // Toggle dropdown
         function toggleDropdown() {
             document.getElementById('dropdown-menu').classList.toggle('show');

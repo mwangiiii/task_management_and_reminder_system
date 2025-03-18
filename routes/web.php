@@ -74,7 +74,12 @@ Route::get('/tasks{id}',[TaskController::class, 'list'])->name('task-mail-info')
 // Route::get('/tasks/details', [TaskController::class, 'list']);
 
 
-Route::get('/dashboard/create/task', [TaskController::class,'index'])->name('dashboard');
+Route::get('/dashboard', [TaskController::class,'viewAllTasks'])->name('dashboard');
+Route::post('/categories/store', [TaskController::class, 'storeCategory'])->name('categories.store');
+Route::post('/recurrency/store', [TaskController::class, 'storeRecurrency'])->name('recurrency.store');
+Route::post('/process-payment', [TaskController::class, 'processPayment'])->name('process-payment');
+Route::post('/task/start/{id}', [TaskController::class, 'startTask'])->name('task.start');
+Route::post('/task/update-status/{id}', [TaskController::class, 'updateStatus'])->name('task.updateStatus');
 
 
 
