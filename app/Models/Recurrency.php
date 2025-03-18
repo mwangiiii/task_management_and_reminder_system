@@ -10,7 +10,7 @@ class Recurrency extends Model
     // use AuditableTrait;
     protected $table='recurrencies';
     protected $fillable =[
-        'frequencies',
+        'frequency',
     ];
     //
 

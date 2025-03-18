@@ -210,7 +210,6 @@
                             <th>Timeline</th>
                             <th>Budget</th>
                             <th>Status</th>
-                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -223,7 +222,7 @@
                                     <div class="text-sm text-gray-500">{{ $task->description }}</div>
                                     @if($task->parentTask)
                                         <div class="text-xs text-indigo-500 mt-1">
-                                            <span class="bg-indigo-100 px-2 py-1 rounded">Subtask of: {{ $task->parentTask->name }}</span>
+                                            <span class="bg-indigo-100 px-2 py-1 rounded">Was a subtask of: {{ $task->parentTask->name }}</span>
                                         </div>
                                     @endif
                                     @if($task->childTasks->count() > 0)
@@ -269,8 +268,6 @@
                                     <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
                                         {{ $task->completionStatus ? $task->completionStatus->name : 'Unknown' }}
                                     </span>
-                                </td>
-                                <td class="actions">
                                 </td>
                             </tr>
                         @endforeach

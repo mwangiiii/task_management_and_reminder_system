@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
+    <link rel="stylesheet" href="{{ asset('css/loading.css') }}">
     <title>Task Details</title>
     <style>
         :root {
@@ -551,6 +552,9 @@
                             </a>
                             <h1 class="task-title">{{ $task->name }}</h1>
                         </div>
+                        <div>
+
+                        </div>
                         <div class="status-actions">
                             <!-- Status Badge -->
                             <span class="status-badge status-in-progress">{{ $task->completionStatus->name }}</span>
@@ -782,11 +786,8 @@
                                     <i class="fas fa-edit"></i> Edit
                                 </a>
                                 <button class="btn btn-danger btn-sm delete-btn" data-id="{{ $childTask->id }}" data-name="{{ $childTask->name }}">
-                                    <i class="fas fa-trash"></i>
+                                    <i class="fas fa-trash"></i>Delete
                                 </button>
-                                <a href="{{ route('tasks.createChild', ['parentTaskId' => $childTask->id]) }}" class="btn btn-primary btn-sm">
-                                    <i class="fas fa-plus"></i> Add Child
-                                </a>
                             </td>
                         </tr>
 
@@ -813,9 +814,14 @@
                                         <a href="{{ route('tasks.edit', $subTask->id) }}" class="btn btn-primary btn-sm">
                                             <i class="fas fa-edit"></i> Edit
                                         </a>
-                                        <button class="btn btn-danger btn-sm delete-btn" data-id="{{ $subTask->id }}" data-name="{{ $subTask->name }}">
+                                        </a>
+                                            <a href="#">
+                                            <button class="btn btn-danger btn-sm delete-btn"
+                                            data-id="{{ $task->id }}"
+                                            data-name="{{ $task->name }}">
                                             <i class="fas fa-trash"></i>
-                                        </button>
+                                            </button>
+                                            </a>
                                     </td>
                                 </tr>
                             @endforeach
@@ -838,21 +844,41 @@
                         <div class="action-buttons">
 
                               <!-- Start Task Button -->
-        <button onclick="startTask({{ $task->id }})" class="btn btn-outline-primary">
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <td>
+                            @if($task->completion_status_id == 1) 
+                                <!-- Start Task Button (if status is Pending) -->
+                                <form action="{{ route('task.start', ['id' => $task->id]) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-outline-primary">
+                                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
-            Start Task
-        </button>
-
-        <!-- Complete Task Button -->
-        <button onclick="completeTask({{ $task->id }})" class="btn btn-outline-success">
-            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-            </svg>
-            Complete Task
-        </button>
+                                        <i class="fas fa-play"></i> Start Task
+                                    </button>
+                                </form>
+                            @else 
+                                <!-- Status Dropdown -->
+                                <form action="{{ route('task.updateStatus', ['id' => $task->id]) }}" method="POST">
+                                    @csrf
+                                    <select name="status" onchange="this.form.submit()" class="form-control btn btn-outline-success">
+                                        <option value="1" {{ $task->completion_status_id == 1 ? 'selected' : '' }}>Pending</option>
+                                        <option value="2" {{ $task->completion_status_id == 2 ? 'selected' : '' }}>In Progress</option>
+                                        <option value="3" {{ $task->completion_status_id == 3 ? 'selected' : '' }}>Completed</option>
+                                        <option value="4" {{ $task->completion_status_id == 4 ? 'selected' : '' }}>Incomplete</option>
+                                    </select>
+                                </form>
+                            @endif
+                        </td>
+                        @if($task->completion_status_id == 3)
+                        <!-- Complete Task Button -->
+                        <button class="btn btn-outline-success">
+                            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Task Completed
+                        </button>
+                        @endif
 
                             <a href="{{ route('tasks.edit', $task->id) }}" class="btn btn-outline-primary">
                                 <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -877,6 +903,11 @@
                                 </svg>
                                 Back to All Tasks
                             </a>
+                        </div>
+                        <div>
+                        <a href="{{ route('tasks.createChild', ['parentTaskId' => $task->id]) }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus"></i> Add Child Task
+                    </a>
                         </div>
                     </div>
                 </div>
@@ -981,88 +1012,50 @@
         </div>
     </div>
 </div>
+     <!-- Delete Confirmation Modal -->
+   <div id="deleteModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Confirm Deletion</h3>
+            <button class="modal-close" id="closeDeleteModal">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to delete task "<span id="taskName"></span>"?</p>
+            <p>This action cannot be undone.</p>
+            
+            <h4>Parent Task:</h4>
+            <ul id="taskList"></ul>
+        </div>
+        <div class="modal-footer">
+            <button id="cancelDelete" class="btn btn-secondary">Cancel</button>
+            <form id="deleteForm" action="" method="POST">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-danger">Delete Task</button>
+            </form>
+        </div>
+    </div>
+</div>
 
-<script>
-    // Toggle dropdown
-    function toggleDropdown() {
-        document.getElementById('dropdown-menu').classList.toggle('show');
-    }
 
-    // Close dropdown when clicking outside
-    window.onclick = function(event) {
-        if (!event.target.matches('.dropdown button')) {
-            var dropdowns = document.getElementsByClassName('dropdown-menu');
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
+    <script>
+        // Toggle dropdown
+        function toggleDropdown() {
+            document.getElementById('dropdown-menu').classList.toggle('show');
+        }
+        
+        // Close dropdown when clicking outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.dropdown button')) {
+                var dropdowns = document.getElementsByClassName('dropdown-menu');
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
                 }
             }
         }
-    }
-
-    // Function to show the modal
-    function showModal(title, message) {
-        document.getElementById('modal-title').textContent = title;
-        document.getElementById('modal-message').textContent = message;
-        document.getElementById('message-modal').style.display = 'block';
-
-        // Automatically close the modal after 3 seconds
-        setTimeout(() => {
-            closeModal();
-        }, 3000);
-    }
-
-    // Function to close the modal
-    function closeModal() {
-        document.getElementById('message-modal').style.display = 'none';
-    }
-
-    // Function to start a task
-    function startTask(taskId) {
-        fetch(`/tasks/${taskId}/start`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showModal('Success', data.message); // Show success modal
-            } else {
-                showModal('Error', 'Failed to start task.'); // Show error modal
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showModal('Error', 'An error occurred while starting the task.'); // Show error modal
-        });
-    }
-
-    // Function to complete a task
-    function completeTask(taskId) {
-        fetch(`/tasks/${taskId}/complete`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-            },
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                showModal('Success', data.message); // Show success modal
-            } else {
-                showModal('Error', 'Failed to complete task.'); // Show error modal
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showModal('Error', 'An error occurred while completing the task.'); // Show error modal
-        });
-    }
-</script>
+    </script>
 </body>
 </html>

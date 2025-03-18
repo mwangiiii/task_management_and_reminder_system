@@ -392,53 +392,12 @@ class TaskController extends Controller
     
     // Modified method to implement soft delete
     // Controller method
-    public function destroy($id)
-    {
-        $task = Task::find($id);
-        
-        if (!$task) {
-            return back()->with('error', 'Task not found.');
-        }
-        
-        // Ensure the authenticated user owns the task
-        if (auth()->id() !== $task->user_id) {
-            return back()->with('error', 'Unauthorized action.');
-        }
-        
-        try {
-            // Check if the task is a parent task
-            if ($task->childTasks()->exists()) {
-                $childTasks = $task->childTasks()->get();
-                
-                // Check if all child tasks are completed
-                $incompleteChildTasks = $childTasks->where('completion_status_id', '!=', 3);
-                
-                if ($incompleteChildTasks->isNotEmpty()) {
-                    return back()->with('error', 'All child tasks must be completed before deleting the parent task.');
-                }
-                
-                // List child tasks and allow user to choose which ones to delete
-                return view('tasks.delete-child-tasks', [
-                    'parentTask' => $task,
-                    'childTasks' => $childTasks
-                ]);
-            }
-            
-            // If the task is not a parent or all child tasks are completed, proceed with soft deletion
-            $task->update(['deleted' => 1]);
-            $task->update(['completion_status_id' => 3]);
-            
-            // Log the soft deletion
-            Log::info('Task soft deleted:', ['task_id' => $id, 'user_id' => auth()->id()]);
-            
-            // Send email notification
-            Mail::to($task->user->email)->send(new TaskDeletedMail($task));
-            
-            return redirect()->route('viewing-all-tasks')->with('success', 'Task deleted successfully.');
-        } catch (\Exception $e) {
-            Log::error('Task Soft Deletion Failed:', ['error' => $e->getMessage()]);
-            return back()->with('error', 'Failed to delete task.');
-        }
+    public function destroy(Request $request)
+    {   Log::info($request);
+        $ids = $request->input('id');
+        Log::info($ids);
+        Task::whereIn('id', $ids)->update(['deleted' => 1]);
+        return response()->json(['success' => 'Tasks deleted successfully']);
     }
 
 
@@ -523,9 +482,9 @@ class TaskController extends Controller
 
 
     public function showOneTask($id)
-{
+{   $taskChild = Task::find($id);
     // Fetch the task with its related uploads, user, completion status, and child tasks
-    $task = Task::with(['uploads', 'user', 'completionStatus', 'childTasks.childTasks'])->findOrFail($id);
+    $task = Task::with(['uploads', 'user', 'completionStatus', 'childTasks'])->findOrFail($id);
     $completionStatus = CompletionStatus::all();
 
     $default_priority_status = Priority::find(1); // Default to "Low"
@@ -893,6 +852,81 @@ public function updateBudget(Request $request, $parentTaskId)
         return redirect()->back()->with('error', 'An error occurred while updating the budget.');
     }
 }
+public function getChildren($id)
+{
+    $task = Task::find($id);
+
+    if (!$task) {
+        return response()->json(['error' => 'Task not found'], 404);
+    }
+
+    // Fetch child tasks using the relationship
+    $children = $task->childTasks()->select('id', 'name')->get();
+
+    return response()->json($children);
+}
+// public function startTask($id)
+// {
+//     $task = Task::findOrFail($id);
+//     $task->completion_status_id = 2; // In Progress
+//     $task->save();
+
+//     return redirect()->back()->with('success', 'Task started successfully.');
+// }
+
+// Update task status from the dropdown
+public function updateStatus(Request $request, $id)
+{
+    $task = Task::findOrFail($id);
+    $task->completion_status_id = $request->status;
+    $task->save();
+
+    return redirect()->back()->with('success', 'Task status updated successfully.');
+}
+public function storeCategory(Request $request)
+{
+    $request->validate([
+        'type' => 'required|string|unique:categories,type'
+    ]);
+
+    $category = Category::create(['type' => $request->type]);
+
+    return response()->json([
+        'id' => $category->id,
+        'type' => $category->type,
+        'message' => 'Category added successfully!'
+    ]);
+}
+public function storeRecurrency(Request $request)
+{
+    $request->validate([
+        'frequency' => 'required|string|unique:recurrencies,frequency'
+    ]);
+    
+
+    $recurrency = Recurrency::create(['frequency' => $request->frequency]);
+    Log::info($recurrency);
+
+    return response()->json([
+        'id' => $recurrency->id,
+        'frequency' => $recurrency->frequency,
+        'message' => 'Recurrency added successfully!'
+    ]);
+}
+public function processPayment(Request $request)
+{
+    $request->validate([
+        'currency' => 'required|string|in:KES,USD,EUR,GBP,NGN',
+    ]);
+
+    $currency = $request->currency;
+    Log::info($currency);
+
+    return back()->with('success', "Payment will be processed in $currency.");
+}
+
+
+
 
 
 public function updatePriority(Request $request, Task $task)
@@ -933,27 +967,24 @@ public function startTask($id)
         'completion_status_id' => 2, // Assuming 2 is the ID for "In Progress"
     ]);
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Task started successfully!',
-    ]);
+    return redirect()->back()->with('success', 'Task Started successfully.');
 }
 
-public function completeTask($id)
-{
-    $task = Task::findOrFail($id);
+// public function completeTask($id)
+// {
+//     $task = Task::findOrFail($id);
 
-    // Update completed_at and completion_status_id
-    $task->update([
-        'completed_at' => now(),
-        'completion_status_id' => 3, // Assuming 3 is the ID for "Completed"
-    ]);
+//     // Update completed_at and completion_status_id
+//     $task->update([
+//         'completed_at' => now(),
+//         'completion_status_id' => 3, // Assuming 3 is the ID for "Completed"
+//     ]);
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Task completed successfully!',
-    ]);
-}
+//     return response()->json([
+//         'success' => true,
+//         'message' => 'Task completed successfully!',
+//     ]);
+// }
 
 
     

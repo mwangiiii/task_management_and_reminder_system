@@ -333,12 +333,17 @@
                         @foreach($categories as $category)
                             <option value="{{ $category->id }}">{{ $category->type }}</option>
                         @endforeach
+                        <option value="add_new">+ Add New Category</option>
                     </select>
+                    <div id="newCategoryInput" style="display: none; margin-top: 10px;">
+                        <input type="text" id="newCategoryName" class="form-control" placeholder="Enter new category">
+                        <button type="button" id="addCategoryBtn" class="btn btn-success btn-sm mt-2">Add</button>
+                    </div>
                 </div>
                 
                 <div class="form-group">
                     <label for="start_date">Start Date</label>
-                    <input type="datetime-local" id="start_date" name="task_start_date" class="form-control" required>
+                    <input type="datetime-local" id="start_date" name="task_start_date" class="start_date form-control" required>
                 </div>
                 
                 <div class="form-group">
@@ -361,6 +366,7 @@
                     <label for="task_cost">Cost</label>
                     <input type="number" id="task_cost" name="task_cost" min="0" step="0.01" class="form-control">
                 </div>
+
                 
                 <div class="form-group" id="budget_container" style="{{ isset($parentTask) ? 'display: none;' : 'display: block;' }}">
                     <label for="budget">Budget</label>
@@ -377,6 +383,7 @@
                             <option value="{{ $completion->id }}">{{ $completion->status }}</option>
                         @endforeach
                     </select>
+
                 </div>
                 
                 <div class="form-group">
@@ -386,7 +393,12 @@
                         @foreach($recurrencies as $recurrency)
                             <option value="{{ $recurrency->id }}">{{ $recurrency->frequency }}</option>
                         @endforeach
+                        <option value="add_new_r">+ Add New Recurrency</option>
                     </select>
+                    <div id="newRecurrencyInput" style="display: none; margin-top: 10px;">
+                        <input type="text" id="newRecurrencyName" class="form-control" placeholder="Enter new recurrency">
+                        <button type="button" id="addRecurrencyBtn" class="btn btn-success btn-sm mt-2">Add</button>
+                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -423,12 +435,104 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             <h2>Add Alert</h2>
-            <input type="datetime-local" id="newAlert" class="form-control">
+            <input type="datetime-local" id="newAlert" class="start_date form-control">
             <button type="button" onclick="addAlert()" class="btn btn-primary mt-4">
                 <i class="fas fa-plus"></i> Add Alert
             </button>
         </div>
     </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+$(document).ready(function () {
+    $('#task_recurrency').change(function () {
+        if ($(this).val() === 'add_new_r') {
+            $('#newRecurrencyInput').show(); 
+        } else {
+            $('#newRecurrencyInput').hide(); 
+        }
+    });
+
+    $('#addRecurrencyBtn').click(function () {
+        var recurrencyName = $('#newRecurrencyName').val().trim();
+
+        if (recurrencyName === '') {
+            alert('Please enter a recurrency name.');
+            return;
+        }
+
+        $.ajax({
+            url: "{{ route('recurrency.store') }}",
+            type: "POST",
+            data: {
+                frequency: recurrencyName, 
+                _token: "{{ csrf_token() }}"
+            },
+            success: function (response) {
+            $('#task_recurrency option[value="add_new_r"]').before(
+                $('<option>', {
+                    value: response.id,
+                    text: response.frequency, 
+                    selected: true
+                })
+            );
+
+                $('#newRecurrencyInput').hide();
+                $('#newRecurrencyName').val('');
+            },
+            error: function (xhr) {
+                alert(xhr.responseJSON.message);
+            }
+        });
+    });
+});
+
+
+</script>
+<script>
+$(document).ready(function () {
+    $('#task_category').change(function () {
+        if ($(this).val() === 'add_new') {
+            $('#newCategoryInput').show();  
+        } else {
+            $('#newCategoryInput').hide(); 
+        }
+    });
+
+    $('#addCategoryBtn').click(function () {
+        var categoryName = $('#newCategoryName').val().trim();
+
+        if (categoryName === '') {
+            alert('Please enter a category name.');
+            return;
+        }
+
+        $.ajax({
+            url: "{{ route('categories.store') }}",
+            type: "POST",
+            data: {
+                type: categoryName, 
+                _token: "{{ csrf_token() }}"
+            },
+            success: function (response) {
+                $('#task_category option[value="add_new"]').before(
+                    $('<option>', {
+                        value: response.id,
+                        text: response.type,
+                        selected: true
+                    })
+                );
+                $('#newCategoryInput').hide();
+                $('#newCategoryName').val('');
+            },
+            error: function (xhr) {
+                alert(xhr.responseJSON.message);
+            }
+        });
+    });
+});
+
+
+</script>
 
     <!-- Offer Modal for Due Date Alert -->
     <div id="offerModal" class="modal" style="display: none;">
@@ -451,6 +555,47 @@
     </div>
 
     <script>
+document.addEventListener("DOMContentLoaded", function () {
+    let startDateInputs = document.getElementsByClassName("start_date");
+
+    function setMinDateTime() {
+        let now = new Date();
+        let year = now.getFullYear();
+        let month = String(now.getMonth() + 1).padStart(2, "0");
+        let day = String(now.getDate()).padStart(2, "0");
+        let hours = String(now.getHours()).padStart(2, "0");
+        let minutes = String(now.getMinutes()).padStart(2, "0");
+
+        let minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+
+        // Loop through all elements and set min attribute
+        for (let input of startDateInputs) {
+            input.min = minDateTime;
+        }
+    }
+
+    setMinDateTime();
+    
+    document.getElementById('taskForm').addEventListener('submit', function (event) {
+            handleGoBack(event);
+        // Show loading overlay
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        // Disable button to prevent multiple submissions
+        document.getElementById('submitButton').disabled = true;
+    });
+});
+            function handleGoBack(event) {
+        event.preventDefault(); // Prevent default navigation
+
+        // Show loading overlay
+        document.getElementById('loadingOverlay').style.display = 'flex';
+
+        // Redirect to the route after a short delay to show the effect
+        setTimeout(() => {
+            window.location.href = "{{ route('viewing-all-tasks') }}";
+        }, 500);
+    }
         // Open Modal
         function openModal() {
             document.getElementById('alertModal').style.display = 'block';

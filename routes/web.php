@@ -13,7 +13,7 @@ Route::get('/', function () {
 
 
 
-
+    Route::get('/task/{id}/children', [TaskController::class, 'getChildren'])->name('task.children');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update'); //post ya kupdate
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -27,8 +27,6 @@ Route::get('/', function () {
      Route::get('/tasks/{id}/edit', [TaskController::class, 'displayUpdateForm'])->name('tasks.edit'); //accessing form ya to update one item
 
      Route::get('viewing/all/tasks', [TaskController::class, 'viewAllTasks'])->name('viewing-all-tasks'); //listing all tasks 
-
-     Route::delete('delete/task/{id}', [TaskController::class, 'destroy'])->name('task.remove'); //deleting tasks.
 
     //  Route::delete('delete/task/{id}', [TaskController::class, 'destroy'])->name('task.remove');
 
@@ -52,6 +50,7 @@ Route::post('/tasks/{parentTaskId}/update-budget', [TaskController::class, 'upda
 
      Route::get('/tasks/{parentTaskId}/create-child', [TaskController::class, 'createChild'])
      ->name('tasks.createChild');
+     Route::delete('delete/task', [TaskController::class, 'destroy'])->name('task.remove');
 
      Route::get('/view/tasks/{id}', [TaskController::class, 'showOneTask'])->name('tasks.showOneTask');
 
@@ -75,7 +74,12 @@ Route::get('/tasks{id}',[TaskController::class, 'list'])->name('task-mail-info')
 // Route::get('/tasks/details', [TaskController::class, 'list']);
 
 
-Route::get('/dashboard/create/task', [TaskController::class,'index'])->name('dashboard');
+Route::get('/dashboard', [TaskController::class,'viewAllTasks'])->name('dashboard');
+Route::post('/categories/store', [TaskController::class, 'storeCategory'])->name('categories.store');
+Route::post('/recurrency/store', [TaskController::class, 'storeRecurrency'])->name('recurrency.store');
+Route::post('/process-payment', [TaskController::class, 'processPayment'])->name('process-payment');
+Route::post('/task/start/{id}', [TaskController::class, 'startTask'])->name('task.start');
+Route::post('/task/update-status/{id}', [TaskController::class, 'updateStatus'])->name('task.updateStatus');
 Route::post('/tasks/{task}/update-priority', [TaskController::class, 'updatePriority'])->name('update.priority'); //updating priority 
 
 
