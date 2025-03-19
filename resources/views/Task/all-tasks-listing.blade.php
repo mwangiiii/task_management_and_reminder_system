@@ -12,6 +12,9 @@
 
 </head>
 <body>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
     <div class="container">
         <div class="header">
             <h1>Task Management</h1>
@@ -52,11 +55,11 @@
     
 
         <a href="{{ route('showing-completed-tasks') }}" class="btn btn-secondary">
-            <i class="fas fa-trash-restore"></i> Show Completed Tasks
+            <i class="fas fa-trash-restore"></i> Archive
         </a>
     </div>
 
-    <div class="sort-controls">
+    <!-- <div class="sort-controls">
         <button id="sortByName">Sort by Name</button>
         <button id="sortByBudget">Sort by Budget</button>
         
@@ -65,7 +68,7 @@
         <button id="sortByDueDate">Sort by Due name</button>
     </a>
         
-    </div>
+    </div> -->
 </div>
 
         @if (session('success'))
@@ -162,6 +165,9 @@
         @endforeach
     </tbody>
 </table>
+</div>
+    </div>
+</div>
             </div>
         </div>
     </div>
