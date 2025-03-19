@@ -296,14 +296,13 @@
                 <!-- Task Description -->
                 <div class="form-group">
                     <label for="task_description">Description</label>
-                    <input type="text" id="task_description" name="task_description" class="form-control" value="{{ old('task_description') }}" required>
+                    <input type="text" id="task_description" name="task_description" class="form-control" value="{{ old('task_description') }}">
                 </div>
                 
                 <!-- Task Category -->
                 <div class="form-group">
                     <label for="task_category">Category</label>
                     <select id="task_category" name="task_category" class="form-control" required>
-                        <option value="">Select category</option>
                         @foreach($categories as $category)
                             <option value="{{ $category->id }}" {{ old('task_category') == $category->id ? 'selected' : '' }}>
                                 {{ $category->type }}
@@ -315,13 +314,13 @@
                 <!-- Start Date -->
                 <div class="form-group">
                     <label for="start_date">Start Date</label>
-                    <input type="datetime-local" id="start_date" name="task_start_date" class="form-control" value="{{ old('task_start_date') }}" required>
+                    <input type="datetime-local" id="start_date" name="task_start_date" class="form-control" value="{{ old('task_start_date') }}">
                 </div>
                 
                 <!-- Due Date -->
                 <div class="form-group">
                     <label for="due_date">Due Date</label>
-                    <input type="datetime-local" id="due_date" name="task_due_date" class="form-control" value="{{ old('task_due_date') }}" required>
+                    <input type="datetime-local" id="due_date" name="task_due_date" class="form-control" value="{{ old('task_due_date') }}">
                 </div>
                 
                 <!-- Alert Section -->
@@ -338,14 +337,13 @@
                 <!-- Task Cost -->
                 <div class="form-group">
                     <label for="task_cost">Cost</label>
-                    <input type="number" id="task_cost" name="task_cost" min="0" step="0.01" class="form-control" value="{{ old('task_cost') }}" required>
+                    <input type="number" id="task_cost" name="task_cost" min="0" step="0.01" class="form-control" value=0>
                 </div>
                 
                 <!-- Task Completion Status -->
                 <div class="form-group">
                     <label for="task_completion_status">Status</label>
                     <select id="task_completion_status" name="task_completion_status" class="form-control" required>
-                        <option value="">Select status</option>
                         @foreach($completions as $completion)
                             <option value="{{ $completion->id }}" {{ old('task_completion_status') == $completion->id ? 'selected' : '' }}>
                                 {{ $completion->status }}
@@ -358,7 +356,6 @@
                 <div class="form-group">
                     <label for="task_recurrency">Recurrency</label>
                     <select id="task_recurrency" name="task_recurrency" class="form-control" required>
-                        <option value="">Select recurrency</option>
                         @foreach($recurrencies as $recurrency)
                             <option value="{{ $recurrency->id }}" {{ old('task_recurrency') == $recurrency->id ? 'selected' : '' }}>
                                 {{ $recurrency->frequency }}
@@ -385,6 +382,10 @@
                         <span>Click to upload files</span>
                         <input type="file" id="task_uploads" name="task_uploads[]" multiple>
                     </label>
+                </div>
+                <div class="form-group">
+                    <label for="parent_currency">Currency</label>
+                    <input type="text" id="parent_currency" class="form-control" value="{{ $parentTask->currency }}" disabled>
                 </div>
             </div>
             
@@ -565,7 +566,7 @@
                 })
                 .then(data => {
                     console.log('Task created successfully:', data);
-                    window.location.href = "{{ route('tasks.index') }}"; // Redirect after success
+                    window.location.href = "{{ route('viewing-all-tasks') }}"; // Redirect after success
                 })
                 .finally(() => {
                     // Hide the loader

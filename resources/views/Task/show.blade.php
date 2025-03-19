@@ -866,6 +866,10 @@
                                         <option value="2" {{ $task->completion_status_id == 2 ? 'selected' : '' }}>In Progress</option>
                                         <option value="3" {{ $task->completion_status_id == 3 ? 'selected' : '' }}>Completed</option>
                                         <option value="4" {{ $task->completion_status_id == 4 ? 'selected' : '' }}>Incomplete</option>
+                                        <option value="5" {{ $task->completion_status_id == 5 ? 'selected' : '' }}>Canceled</option>
+                                        <option value="6" {{ $task->completion_status_id == 6 ? 'selected' : '' }}>On Hold</option>
+                                        <option value="7" {{ $task->completion_status_id == 7 ? 'selected' : '' }}>Awaiting Approval</option>
+                                        <option value="8" {{ $task->completion_status_id == 8 ? 'selected' : '' }}>Rejected</option>
                                     </select>
                                 </form>
                             @endif

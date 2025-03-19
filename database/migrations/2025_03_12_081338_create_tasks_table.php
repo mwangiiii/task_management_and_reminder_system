@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('description'); 
             $table->foreignId('category_id')->constrained('categories')->onDelete('cascade');
             $table->foreignId('recurrency_id')->constrained('recurrencies')->onDelete('cascade');
+            $table->string('currency');
             $table->integer('cost');
             $table->foreignId('completion_status_id')->constrained('completion__statuses')->onDelete('cascade');
             $table->dateTime('start_date'); 

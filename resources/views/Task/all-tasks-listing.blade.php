@@ -24,21 +24,6 @@
             <a href="{{ route('creating-form') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Add Task
             </a>
-            <form action="{{ route('process-payment') }}" method="POST">
-                @csrf
-                <label for="currency">Choose Currency</label>
-                <select id="currency" name="currency" class="form-control" required>
-                    <option value="KES">Kenyan Shilling (KES)</option>
-                    <option value="USD">US Dollar (USD)</option>
-                    <option value="EUR">Euro (EUR)</option>
-                    <option value="GBP">British Pound (GBP)</option>
-                    <option value="NGN">Nigerian Naira (NGN)</option>
-                </select>
-
-                <button type="submit" class="btn btn-primary mt-3">
-                    <i class="fas fa-check"></i> Submit
-                </button>
-            </form>
 
         </div>
 
@@ -120,7 +105,7 @@
                     @endphp
                     <span class="task-status {{ $statusClass }}">{{ $status }}</span>
                 </td>
-                <td>${{ number_format($task->budget, 2) }} / ${{ number_format($task->cost, 2) }}</td>
+                <td>{{$task->currency}}  {{ number_format($task->budget, 2) }} / {{$task->currency}}  {{ number_format($task->cost, 2) }}</td>
                 <td>{{ \Carbon\Carbon::parse($task->due_date)->format('M d, Y') }}</td>
                 <td class="actions">
                     <a href="{{ route('tasks.showOneTask', ['id' => $task->id]) }}">
@@ -253,30 +238,6 @@
     </div>
 </div>
 
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    fetch("https://ipapi.co/json/")
-        .then(response => response.json())
-        .then(data => {
-            let country = data.country_code;
-            let currencySelect = document.getElementById("currency");
-
-            const currencyMap = {
-                "KE": "KES", // Kenya
-                "US": "USD", // United States
-                "GB": "GBP", // United Kingdom
-                "NG": "NGN", // Nigeria
-                "EU": "EUR", // European Union
-            };
-
-            if (currencyMap[country]) {
-                currencySelect.value = currencyMap[country];
-            }
-        })
-        .catch(error => console.log("Error fetching location:", error));
-});
-</script>
 
 <script>
     // Task details functionality

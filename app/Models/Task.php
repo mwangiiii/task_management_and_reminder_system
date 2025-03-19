@@ -19,6 +19,7 @@ class Task extends Model
         'alert_id',
         'category_id',
         'recurrency_id',
+        'currency',
         'cost',
         'parent_task_id',
         'completion_status_id',
