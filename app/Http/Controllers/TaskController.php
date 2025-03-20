@@ -69,7 +69,7 @@ class TaskController extends Controller
             $validated_task_data = $request->validate([
                 'task_name' => 'required|string|max:255',
                 'task_alerts' => 'required|array', // Validate that task_alerts is an array
-                'task_alerts.*' => 'date_format:Y-m-d\TH:i', // Validate each alert in the array
+                'task_alerts.*' => 'nullable|date_format:Y-m-d\TH:i',
                 'task_repeat' => 'nullable|boolean',
                 'task_description' => 'required|string',
                'task_cost' => 'nullable|numeric|min:0',
@@ -302,9 +302,9 @@ class TaskController extends Controller
                 // Create new alerts
                 foreach ($validated_task_data['task_alerts'] as $alert_time) {
                     Alert::create([
-                        'time_of_alert' => $alert_time,
-                        'task_id' => $task->id,
-                        'alert_sent' => false,
+                        'time_of_alert' => $alert_time ?? null,
+                        'task_id' => $task->id ?? null,
+                        'alert_sent' => false ?? null,
                     ]);
                 }
             }

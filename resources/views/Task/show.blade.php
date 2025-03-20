@@ -905,9 +905,7 @@
                             </a>
                         </div>
                         <div>
-                        <a href="{{ route('tasks.createChild', ['parentTaskId' => $task->id]) }}" class="btn btn-primary btn-sm">
-                        <i class="fas fa-plus"></i> Add Child Task
-                    </a>
+                
                         </div>
                     </div>
                 </div>
