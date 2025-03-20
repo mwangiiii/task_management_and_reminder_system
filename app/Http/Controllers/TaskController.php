@@ -72,6 +72,7 @@ class TaskController extends Controller
                 'task_alerts.*' => 'nullable|date_format:Y-m-d\TH:i',
                 'task_repeat' => 'nullable|boolean',
                 'task_description' => 'required|string',
+                'currency' => 'required|string',
                'task_cost' => 'nullable|numeric|min:0',
                 'task_category' => 'required|exists:categories,id',
                 'task_recurrency' => 'required|exists:recurrencies,id',
@@ -135,6 +136,7 @@ class TaskController extends Controller
             'description' => $validated_task_data['task_description'],
             'category_id' => $validated_task_data['task_category'],
             'recurrency_id' => $validated_task_data['task_recurrency'],
+            'currency' => $validated_task_data['currency'],
             'cost' => $validated_task_data['task_cost'] ?? 0,
             'budget' => $is_parent_task ? $validated_task_data['budget'] : 0,
             'completion_status_id' => $validated_task_data['task_completion_status'],
@@ -209,6 +211,7 @@ class TaskController extends Controller
                 'task_alerts.*' => 'date_format:Y-m-d\TH:i', // Validate each alert in the array
                 'task_repeat' => 'nullable|boolean',
                 'task_description' => 'sometimes|string',
+                'currency' => 'required|string',
                 'task_cost' => 'nullable|numeric|min:0',
                 'task_category' => 'sometimes|exists:categories,id',
                 'task_recurrency' => 'sometimes|exists:recurrencies,id',
@@ -283,6 +286,7 @@ class TaskController extends Controller
                 'description' => $validated_task_data['task_description'] ?? $task->description,
                 'category_id' => $validated_task_data['task_category'] ?? $task->category_id,
                 'recurrency_id' => $validated_task_data['task_recurrency'] ?? $task->recurrency_id,
+                'currency' => $validated_task_data['currency']?? $task->currency,
                 'cost' => $validated_task_data['task_cost'] ?? $task->cost,
                 'budget' => $is_parent_task ? ($validated_task_data['budget'] ?? $task->budget) : 0,
                 'completion_status_id' => $validated_task_data['task_completion_status'] ?? $task->completion_status_id,
@@ -500,6 +504,7 @@ public function createChild($parentTaskId)
     {
         // Fetch the parent task
         $parentTask = Task::findOrFail($parentTaskId);
+        Log::info($parentTask);
 
         // Fetch other necessary data for the form (e.g., categories, completion statuses, recurrencies)
         $categories = Category::all();

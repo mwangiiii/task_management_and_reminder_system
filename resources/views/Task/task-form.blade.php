@@ -323,13 +323,12 @@
                 
                 <div class="form-group">
                     <label for="task_description">Description</label>
-                    <input type="text" id="task_description" name="task_description" class="form-control" required>
+                    <input type="text" id="task_description" name="task_description" class="form-control">
                 </div>
                 
                 <div class="form-group">
                     <label for="task_category">Category</label>
                     <select id="task_category" name="task_category" class="form-control" required>
-                        <option value="">Select category</option>
                         @foreach($categories as $category)
                             <option value="{{ $category->id }}">{{ $category->type }}</option>
                         @endforeach
@@ -343,12 +342,12 @@
                 
                 <div class="form-group">
                     <label for="start_date">Start Date</label>
-                    <input type="datetime-local" id="start_date" name="task_start_date" class="start_date form-control" required>
+                    <input type="datetime-local" id="start_date" name="task_start_date" class="start_date form-control">
                 </div>
                 
                 <div class="form-group">
                     <label for="due_date">Due Date</label>
-                    <input type="datetime-local" id="due_date" name="task_due_date" class="form-control" required>
+                    <input type="datetime-local" id="due_date" name="task_due_date" class="form-control">
                 </div>
                 
                 <!-- Alert Section -->
@@ -364,13 +363,13 @@
                 
                 <div class="form-group">
                     <label for="task_cost">Cost</label>
-                    <input type="number" id="task_cost" name="task_cost" min="0" step="0.01" class="form-control">
+                    <input type="number" id="task_cost" name="task_cost" min="0" step="0.01" class="form-control" value=0>
                 </div>
 
                 
                 <div class="form-group" id="budget_container" style="{{ isset($parentTask) ? 'display: none;' : 'display: block;' }}">
                     <label for="budget">Budget</label>
-                    <input type="number" id="budget" name="budget" min="0" step="0.01" class="form-control" {{ isset($parentTask) ? '' : 'required' }}>
+                    <input type="number" id="budget" name="budget" min="0" step="0.01" class="form-control" value=0>
                 </div>
                 
                 <div class="form-group">
@@ -389,16 +388,10 @@
                 <div class="form-group">
                     <label for="task_recurrency">Recurrency</label>
                     <select id="task_recurrency" name="task_recurrency" class="form-control" required>
-                        <option value="">Select recurrency</option>
                         @foreach($recurrencies as $recurrency)
                             <option value="{{ $recurrency->id }}">{{ $recurrency->frequency }}</option>
                         @endforeach
-                        <option value="add_new_r">+ Add New Recurrency</option>
                     </select>
-                    <div id="newRecurrencyInput" style="display: none; margin-top: 10px;">
-                        <input type="text" id="newRecurrencyName" class="form-control" placeholder="Enter new recurrency">
-                        <button type="button" id="addRecurrencyBtn" class="btn btn-success btn-sm mt-2">Add</button>
-                    </div>
                 </div>
                 
                 <div class="form-group">
@@ -408,6 +401,16 @@
                         <span>Click to upload files</span>
                         <input type="file" id="task_uploads" name="task_uploads[]" multiple>
                     </label>
+                </div>
+                <div class="form-group">
+                    <label for="currency">Choose Currency</label>
+                    <select id="currency" name="currency" class="form-control" required>
+                        <option value="KES">Kenyan Shilling (KES)</option>
+                        <option value="USD">US Dollar (USD)</option>
+                        <option value="EUR">Euro (EUR)</option>
+                        <option value="GBP">British Pound (GBP)</option>
+                        <option value="NGN">Nigerian Naira (NGN)</option>
+                    </select>
                 </div>
             </div>
             
