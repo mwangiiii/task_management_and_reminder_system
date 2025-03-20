@@ -68,7 +68,7 @@ class TaskController extends Controller
             // Validate request data
             $validated_task_data = $request->validate([
                 'task_name' => 'required|string|max:255',
-                'task_alerts' => 'required|array', // Validate that task_alerts is an array
+                'task_alerts' => 'nullable|array', // Validate that task_alerts is an array
                 'task_alerts.*' => 'nullable|date_format:Y-m-d\TH:i',
                 'task_repeat' => 'nullable|boolean',
                 'task_description' => 'required|string',
@@ -80,13 +80,13 @@ class TaskController extends Controller
                 'task_start_date' => 'required|date_format:Y-m-d\TH:i',
                 'task_due_date' => 'date_format:Y-m-d\TH:i',
                 'parent_task_id' => 'nullable|exists:tasks,id',
-                'budget' => 'nullable|numeric|min:0',
+                'budget' => 'nullable|numeric',
                 'task_uploads.*' => 'nullable',
                 'priority_status_id' => 'nullable|exists:priority_statuses,id',
 
             ]);
     
-            Log::info('Validated Data:', $validated_task_data);
+            // Log::info('Validated Data:', $validated_task_data);
         } catch (ValidationException $e) {
             Log::error('Validation Failed:', $e->errors());
             return response()->json(['errors' => $e->errors()], 422);
@@ -129,6 +129,7 @@ class TaskController extends Controller
         }
     
         $validated_task_data['user_id'] = $user_id;
+        log::info($user_id);
     
         $task = Task::create([
             'name' => $validated_task_data['task_name'],
@@ -190,7 +191,13 @@ class TaskController extends Controller
         }
     
         // Otherwise return a redirect with success message
-        return redirect()->route('tasks.showOneTask', ['id' => $task->id])->with('success', 'Task created successfully!');
+        return response()->json([
+            'id' => $task->id, // Ensure 'id' is included
+            'message' => 'Task created successfully!'
+        ]);
+        
+
+
 
     }
 

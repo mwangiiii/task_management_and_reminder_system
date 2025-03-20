@@ -563,11 +563,17 @@
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                     return response.json();
-                })
-                .then(data => {
-                    console.log('Task created successfully:', data);
-                    window.location.href = "{{ route('viewing-all-tasks') }}"; // Redirect after success
-                })
+                })a
+                .then((data) => {
+    console.log("Server Response:", data); // Debugging step
+    if (data.task && data.task.id) {
+        window.location.href = `/view/tasks/${data.task.id}`;
+    } else if (data.id) {
+        window.location.href = `/view/tasks/${data.id}`;
+    } else {
+        console.error("Task ID is missing in the response.");
+    }
+})
                 .finally(() => {
                     // Hide the loader
                     document.getElementById('loader').style.display = 'none';
