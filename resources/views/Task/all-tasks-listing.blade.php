@@ -56,7 +56,7 @@
     
 
         <a href="{{ route('showing-completed-tasks') }}" class="btn btn-secondary">
-            <i class="fas fa-trash-restore"></i> Archive
+            <i class="fas fa-trash-restore"></i> Archived
         </a>
     </div>
 

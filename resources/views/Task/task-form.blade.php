@@ -997,9 +997,16 @@ if (form && loader) {
                 return response.json(); // Parse the JSON response
             })
             .then((data) => {
-                // Handle the response data (optional)
-                console.log("Task created successfully:", data);
-            })
+    console.log("Server Response:", data); // Debugging step
+    if (data.task && data.task.id) {
+        window.location.href = `/view/tasks/${data.task.id}`;
+    } else if (data.id) {
+        window.location.href = `/view/tasks/${data.id}`;
+    } else {
+        console.error("Task ID is missing in the response.");
+    }
+})
+
             .finally(() => {
                 // Hide the loader
                 loader.style.display = "none";

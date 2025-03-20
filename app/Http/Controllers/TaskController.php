@@ -68,8 +68,8 @@ class TaskController extends Controller
             // Validate request data
             $validated_task_data = $request->validate([
                 'task_name' => 'required|string|max:255',
-                'task_alerts' => 'required|array', // Validate that task_alerts is an array
-                'task_alerts.*' => 'date_format:Y-m-d\TH:i', // Validate each alert in the array
+                'task_alerts' => 'nullable|array', // Validate that task_alerts is an array
+                'task_alerts.*' => 'nullable|date_format:Y-m-d\TH:i',
                 'task_repeat' => 'nullable|boolean',
                 'task_description' => 'required|string',
                 'currency' => 'required|string',
@@ -80,13 +80,13 @@ class TaskController extends Controller
                 'task_start_date' => 'required|date_format:Y-m-d\TH:i',
                 'task_due_date' => 'date_format:Y-m-d\TH:i',
                 'parent_task_id' => 'nullable|exists:tasks,id',
-                'budget' => 'nullable|numeric|min:0',
+                'budget' => 'nullable|numeric',
                 'task_uploads.*' => 'nullable',
                 'priority_status_id' => 'nullable|exists:priority_statuses,id',
 
             ]);
     
-            Log::info('Validated Data:', $validated_task_data);
+            // Log::info('Validated Data:', $validated_task_data);
         } catch (ValidationException $e) {
             Log::error('Validation Failed:', $e->errors());
             return response()->json(['errors' => $e->errors()], 422);
@@ -129,6 +129,7 @@ class TaskController extends Controller
         }
     
         $validated_task_data['user_id'] = $user_id;
+        log::info($user_id);
     
         $task = Task::create([
             'name' => $validated_task_data['task_name'],
@@ -190,7 +191,13 @@ class TaskController extends Controller
         }
     
         // Otherwise return a redirect with success message
-        return redirect()->route('tasks.showOneTask', ['id' => $task->id])->with('success', 'Task created successfully!');
+        return response()->json([
+            'id' => $task->id, // Ensure 'id' is included
+            'message' => 'Task created successfully!'
+        ]);
+        
+
+
 
     }
 
@@ -306,9 +313,9 @@ class TaskController extends Controller
                 // Create new alerts
                 foreach ($validated_task_data['task_alerts'] as $alert_time) {
                     Alert::create([
-                        'time_of_alert' => $alert_time,
-                        'task_id' => $task->id,
-                        'alert_sent' => false,
+                        'time_of_alert' => $alert_time ?? null,
+                        'task_id' => $task->id ?? null,
+                        'alert_sent' => false ?? null,
                     ]);
                 }
             }
@@ -485,20 +492,17 @@ class TaskController extends Controller
 
 
 
-    public function showOneTask($id)
-{   $taskChild = Task::find($id);
-    // Fetch the task with its related uploads, user, completion status, and child tasks
-    $task = Task::with(['uploads', 'user', 'completionStatus', 'childTasks'])->findOrFail($id);
-    $completionStatus = CompletionStatus::all();
-
-    $default_priority_status = Priority::find(1); // Default to "Low"
-    $other_priority_statuses = Priority::where('id', '!=', 1)->get();
-
-
-    // Pass the task data to the view
-    return view('Task.show', compact('task','completionStatus','default_priority_status','other_priority_statuses'));
-}
-
+    public function showOneTask($id) {
+        // Fetch the task with its related uploads, user, completion status, and direct child tasks
+        $task = Task::with(['uploads', 'user', 'completionStatus', 'childTasks.childTasks'])->findOrFail($id);
+        
+        $completionStatus = CompletionStatus::all();
+        $default_priority_status = Priority::find(1); // Default to "Low"
+        $other_priority_statuses = Priority::where('id', '!=', 1)->get();
+        
+        // Pass the task data to the view
+        return view('Task.show', compact('task', 'completionStatus', 'default_priority_status', 'other_priority_statuses'));
+    }
   
 public function createChild($parentTaskId)
     {
