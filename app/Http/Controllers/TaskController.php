@@ -492,20 +492,17 @@ class TaskController extends Controller
 
 
 
-    public function showOneTask($id)
-{   $taskChild = Task::find($id);
-    // Fetch the task with its related uploads, user, completion status, and child tasks
-    $task = Task::with(['uploads', 'user', 'completionStatus', 'childTasks'])->findOrFail($id);
-    $completionStatus = CompletionStatus::all();
-
-    $default_priority_status = Priority::find(1); // Default to "Low"
-    $other_priority_statuses = Priority::where('id', '!=', 1)->get();
-
-
-    // Pass the task data to the view
-    return view('Task.show', compact('task','completionStatus','default_priority_status','other_priority_statuses'));
-}
-
+    public function showOneTask($id) {
+        // Fetch the task with its related uploads, user, completion status, and direct child tasks
+        $task = Task::with(['uploads', 'user', 'completionStatus', 'childTasks.childTasks'])->findOrFail($id);
+        
+        $completionStatus = CompletionStatus::all();
+        $default_priority_status = Priority::find(1); // Default to "Low"
+        $other_priority_statuses = Priority::where('id', '!=', 1)->get();
+        
+        // Pass the task data to the view
+        return view('Task.show', compact('task', 'completionStatus', 'default_priority_status', 'other_priority_statuses'));
+    }
   
 public function createChild($parentTaskId)
     {

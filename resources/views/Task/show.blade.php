@@ -777,8 +777,8 @@
                             <td>${{ number_format($childTask->budget, 2) }} / ${{ number_format($childTask->cost, 2) }}</td>
                             <td>{{ \Carbon\Carbon::parse($childTask->due_date)->format('M d, Y') }}</td>
                             <td class="actions">
-                                <a href="{{ route('tasks.showOneTask', ['id' => $childTask->id])}}">
-                                    <button class="btn btn-secondary btn-sm view-task-btn" data-id="{{$childTask->id}}>
+                                <a href="{{ route('tasks.showOneTask', ['id' => $childTask->id]) }}">
+                                    <button class="btn btn-secondary btn-sm view-task-btn" data-id="{{ $childTask->id }}">
                                         <i class="fas fa-eye"></i> View
                                     </button>
                                 </a>
@@ -806,7 +806,7 @@
                                     <td>${{ number_format($subTask->budget, 2) }} / ${{ number_format($subTask->cost, 2) }}</td>
                                     <td>{{ \Carbon\Carbon::parse($subTask->due_date)->format('M d, Y') }}</td>
                                     <td class="actions">
-                                        <a href="{{ route('tasks.show', $subTask->id) }}">
+                                        <a href="{{ route('tasks.showOneTask', ['id' => $subTask->id]) }}">
                                             <button class="btn btn-secondary btn-sm view-task-btn">
                                                 <i class="fas fa-eye"></i> View
                                             </button>
@@ -814,14 +814,9 @@
                                         <a href="{{ route('tasks.edit', $subTask->id) }}" class="btn btn-primary btn-sm">
                                             <i class="fas fa-edit"></i> Edit
                                         </a>
-                                        </a>
-                                            <a href="#">
-                                            <button class="btn btn-danger btn-sm delete-btn"
-                                            data-id="{{ $task->id }}"
-                                            data-name="{{ $task->name }}">
-                                            <i class="fas fa-trash"></i>
-                                            </button>
-                                            </a>
+                                        <button class="btn btn-danger btn-sm delete-btn" data-id="{{ $subTask->id }}" data-name="{{ $subTask->name }}">
+                                            <i class="fas fa-trash"></i>Delete
+                                        </button>
                                     </td>
                                 </tr>
                             @endforeach

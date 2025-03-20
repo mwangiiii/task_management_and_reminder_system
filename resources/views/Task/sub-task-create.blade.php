@@ -384,9 +384,9 @@
                     </label>
                 </div>
                 <div class="form-group">
-                    <label for="parent_currency">Currency</label>
-                    <input type="text" id="parent_currency" class="form-control" value="{{ $parentTask->currency }}" disabled>
-                </div>
+    <label for="parent_currency">Currency</label>
+    <input type="text" id="parent_currency" class="form-control" name="currency" value="{{ $parentTask->currency }}" readonly>
+</div>
             </div>
             
             <!-- Task Repeat Checkbox -->
@@ -447,165 +447,174 @@
         </div>
     </div>
 
+
     <script>
-        // Open Modal for Alerts
-        function openModal() {
-            document.getElementById('alertModal').style.display = 'block';
-        }
+    // Open Modal for Alerts
+function openModal() {
+    document.getElementById('alertModal').style.display = 'block';
+}
 
-        // Close Modal for Alerts
-        function closeModal() {
-            document.getElementById('alertModal').style.display = 'none';
-        }
+// Close Modal for Alerts
+function closeModal() {
+    document.getElementById('alertModal').style.display = 'none';
+}
 
-        // Add Alert
-        function addAlert() {
-            const newAlert = document.getElementById('newAlert').value;
-            if (newAlert) {
-                const alertsContainer = document.getElementById('alerts-container');
-                const newAlertInput = document.createElement('input');
-                newAlertInput.type = 'datetime-local';
-                newAlertInput.name = 'task_alerts[]';
-                newAlertInput.value = newAlert;
-                newAlertInput.className = 'form-control w-full mt-2';
-                alertsContainer.appendChild(newAlertInput);
-                closeModal();
-            }
-        }
-
-        // Open Error Modal
-        function openErrorModal(errorMessage) {
-            document.getElementById('errorMessage').textContent = errorMessage;
-            document.getElementById('errorModal').style.display = 'block';
-        }
-
-        // Close Error Modal
-        function closeErrorModal() {
-            document.getElementById('errorModal').style.display = 'none';
-        }
-
-        // Update Parent Task Budget
-        function updateBudget() {
-            // Get the additional budget value from the input field
-            const additionalBudget = parseFloat(document.getElementById('additionalBudget').value);
-
-            // Validate the additional budget input
-            if (isNaN(additionalBudget)) {
-                alert("Please enter a valid amount.");
-                return;
-            }
-
-            // Get the parent task ID from the hidden input field
-            const parentTaskId = document.querySelector('input[name="parent_task_id"]').value;
-
-            // Construct the URL for the API endpoint
-            const url = `/tasks/${parentTaskId}/update-budget`;
-
-            // Send a POST request using Fetch API
-            fetch(url, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({ additionalBudget })
-            })
-            .then(response => {
-                if (response.redirected) {
-                    // If the response is a redirect, reload the page to handle the session flash messages
-                    window.location.href = response.url;
-                } else {
-                    throw new Error("Network response was not ok.");
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                showErrorPopup("An error occurred. Please try again.");
-            });
-        }
-
-        // Function to check for session messages and show popups
-        function checkSessionMessages() {
-            const successMessage = "{{ session('success') }}";
-            const errorMessage = "{{ session('error') }}";
-            const newBudget = parseFloat(document.getElementById('new_budget').value);
-
-            if (successMessage) {
-                showConfirmationPopup(`Budget successfully updated to $${newBudget.toFixed(2)}!`);
-            }
-
-            if (errorMessage) {
-                showErrorPopup(errorMessage);
-            }
-        }
-
-        // Validate Budget
-        function validateBudget(event) {
-            event.preventDefault(); // Prevent form submission
-
-            const taskCost = parseFloat(document.getElementById('task_cost').value);
-            const parentBudget = parseFloat(document.getElementById('parent_budget').value);
-
-            if (taskCost > parentBudget) {
-                const errorMessage = `The total cost of child tasks exceeds the parent task budget. Remaining budget: $${parentBudget}.`;
-                openErrorModal(errorMessage);
-            } else {
-                // Show the loader
-                document.getElementById('loader').style.display = 'grid';
-
-                // Submit the form using Fetch API
-                fetch(event.target.action, {
-                    method: event.target.method,
-                    body: new FormData(event.target),
-                })
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    return response.json();
-                })a
-                .then((data) => {
-    console.log("Server Response:", data); // Debugging step
-    if (data.task && data.task.id) {
-        window.location.href = `/view/tasks/${data.task.id}`;
-    } else if (data.id) {
-        window.location.href = `/view/tasks/${data.id}`;
-    } else {
-        console.error("Task ID is missing in the response.");
+// Add Alert
+function addAlert() {
+    const newAlert = document.getElementById('newAlert').value;
+    if (newAlert) {
+        const alertsContainer = document.getElementById('alerts-container');
+        const newAlertInput = document.createElement('input');
+        newAlertInput.type = 'datetime-local';
+        newAlertInput.name = 'task_alerts[]';
+        newAlertInput.value = newAlert;
+        newAlertInput.className = 'form-control w-full mt-2';
+        alertsContainer.appendChild(newAlertInput);
+        closeModal();
     }
-})
-                .finally(() => {
-                    // Hide the loader
-                    document.getElementById('loader').style.display = 'none';
-                });
-            }
+}
+
+// Open Error Modal
+function openErrorModal(errorMessage) {
+    document.getElementById('errorMessage').textContent = errorMessage;
+    document.getElementById('errorModal').style.display = 'block';
+}
+
+// Close Error Modal
+function closeErrorModal() {
+    document.getElementById('errorModal').style.display = 'none';
+}
+
+// Update Parent Task Budget
+function updateBudget() {
+    // Get the additional budget value from the input field
+    const additionalBudget = parseFloat(document.getElementById('additionalBudget').value);
+
+    // Validate the additional budget input
+    if (isNaN(additionalBudget)) {
+        alert("Please enter a valid amount.");
+        return;
+    }
+
+    // Get the parent task ID from the hidden input field
+    const parentTaskId = document.querySelector('input[name="parent_task_id"]').value;
+
+    // Construct the URL for the API endpoint
+    const url = `/tasks/${parentTaskId}/update-budget`;
+
+    // Send a POST request using Fetch API
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+        },
+        body: JSON.stringify({ additionalBudget })
+    })
+    .then(response => {
+        if (response.redirected) {
+            // If the response is a redirect, reload the page to handle the session flash messages
+            window.location.href = response.url;
+        } else {
+            throw new Error("Network response was not ok.");
         }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showErrorPopup("An error occurred. Please try again.");
+    });
+}
 
-        // File Input Enhancement
-        document.addEventListener("DOMContentLoaded", function () {
-            const fileInput = document.getElementById('task_uploads');
-            const fileLabel = document.querySelector('.file-upload span');
+// Function to check for session messages and show popups
+function checkSessionMessages() {
+    const successMessage = "{{ session('success') }}";
+    const errorMessage = "{{ session('error') }}";
+    const newBudget = parseFloat(document.getElementById('new_budget').value);
 
-            fileInput.addEventListener('change', function () {
-                fileLabel.textContent = fileInput.files.length > 0
-                    ? `${fileInput.files.length} file(s) selected`
-                    : 'Click to upload files';
-            });
+    if (successMessage) {
+        showConfirmationPopup(`Budget successfully updated to $${newBudget.toFixed(2)}!`);
+    }
 
-            // DateTime Constraints
-            const now = new Date().toISOString().slice(0, 16);
-            const startDateInput = document.getElementById("start_date");
-            const dueDateInput = document.getElementById("due_date");
+    if (errorMessage) {
+        showErrorPopup(errorMessage);
+    }
+}
 
-            startDateInput.min = now;
+// Validate Budget
+function validateBudget(event) {
+    event.preventDefault(); // Prevent form submission
 
-            startDateInput.addEventListener("change", function () {
-                dueDateInput.min = startDateInput.value;
-            });
+    const taskCost = parseFloat(document.getElementById('task_cost').value);
+    const parentBudget = parseFloat(document.getElementById('parent_budget').value);
 
-            // Check for session messages when the page loads
-            checkSessionMessages();
+    if (taskCost > parentBudget) {
+        const errorMessage = `The total cost of child tasks exceeds the parent task budget. Remaining budget: $${parentBudget}.`;
+        openErrorModal(errorMessage);
+    } else {
+        // Show the loader
+        document.getElementById('loader').style.display = 'grid';
+
+        // Submit the form using Fetch API
+        fetch(event.target.action, {
+            method: event.target.method,
+            body: new FormData(event.target),
+            headers: {
+                'Accept': 'application/json' // Ensure server knows we expect JSON
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then((data) => {
+            console.log("Server Response:", data); // Debugging step
+            if (data.task && data.task.id) {
+                window.location.href = `/view/tasks/${data.task.id}`;
+            } else if (data.id) {
+                window.location.href = `/view/tasks/${data.id}`;
+            } else {
+                console.error("Task ID is missing in the response.");
+                // Hide the loader if there's an error
+                document.getElementById('loader').style.display = 'none';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Hide the loader if there's an error
+            document.getElementById('loader').style.display = 'none';
+            alert("An error occurred while creating the task. Please try again.");
         });
-    </script>
+    }
+}
+
+// File Input Enhancement
+document.addEventListener("DOMContentLoaded", function () {
+    const fileInput = document.getElementById('task_uploads');
+    const fileLabel = document.querySelector('.file-upload span');
+
+    fileInput.addEventListener('change', function () {
+        fileLabel.textContent = fileInput.files.length > 0
+            ? `${fileInput.files.length} file(s) selected`
+            : 'Click to upload files';
+    });
+
+    // DateTime Constraints
+    const now = new Date().toISOString().slice(0, 16);
+    const startDateInput = document.getElementById("start_date");
+    const dueDateInput = document.getElementById("due_date");
+
+    startDateInput.min = now;
+
+    startDateInput.addEventListener("change", function () {
+        dueDateInput.min = startDateInput.value;
+    });
+
+    // Check for session messages when the page loads
+    checkSessionMessages();
+});
+
+</script>
 </body>
 </html>
