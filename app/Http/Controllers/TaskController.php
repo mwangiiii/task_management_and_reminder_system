@@ -990,6 +990,36 @@ public function startTask($id)
 //         'message' => 'Task completed successfully!',
 //     ]);
 // }
+public function startTaskNow(Task $task) {
+    $task->update(['start_date' => now()]);
+    Log::info($task);
+    $tasks = Task::where('deleted', 0)->get();
+        $recurrencies = Recurrency::all();
+        $completionStatus = CompletionStatus::all();
+        $categories = Category::all();
+        
+        return view('Task.all-tasks-listing', compact('categories', 'completionStatus', 'recurrencies', 'tasks'))->with('success', 'Task has been started!');
+}
+
+public function extendTask(Task $task) {
+    Log::info($task);
+    return view('Task.due_date',compact('task'));
+}
+public function updateDueDate(Request $request, Task $task) {
+    $request->validate([
+        'new_due_date' => 'required|date|after:now',
+    ]);
+    $newDueDate = Carbon::parse($request->input('new_due_date'));
+    $task->update(['due_date' => $newDueDate]);
+
+    $tasks = Task::where('deleted', 0)->get();
+        $recurrencies = Recurrency::all();
+        $completionStatus = CompletionStatus::all();
+        $categories = Category::all();
+        
+        return view('Task.all-tasks-listing', compact('categories', 'completionStatus', 'recurrencies', 'tasks'))->with('success', 'Task due date has been updated succesfully!');
+}
+
 
 
     

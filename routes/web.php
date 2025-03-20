@@ -88,6 +88,9 @@ Route::post('/tasks/{id}/start', [TaskController::class, 'startTask'])->name('ta
 
 // Complete Task
 Route::post('/tasks/{id}/complete', [TaskController::class, 'completeTask'])->name('tasks.complete');
+Route::get('/tasks/{task}/start', [TaskController::class, 'startTaskNow'])->name('tasks.start');
+Route::get('/tasks/{task}/extend', [TaskController::class, 'extendTask'])->name('tasks.extend');
+Route::post('/tasks/{task}/update-due-date', [TaskController::class, 'updateDueDate'])->name('tasks.update_due_date');
 
 
 

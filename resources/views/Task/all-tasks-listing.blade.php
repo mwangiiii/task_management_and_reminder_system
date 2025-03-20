@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="{{ asset('css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('css/loading.css') }}">
 
+
 </head>
 <body>
 <div class="container">
@@ -141,25 +142,30 @@
                     <td>${{ number_format($child->budget, 2) }} / ${{ number_format($child->cost, 2) }}</td>
                     <td>{{ \Carbon\Carbon::parse($child->due_date)->format('M d, Y') }}</td>
                     <td class="actions">
-                        <a href="{{ route('tasks.showOneTask', ['id' => $child->id]) }}">
-                            <button class="btn btn-secondary btn-sm view-task-btn" data-id="{{ $child->id }}">
-                                <i class="fas fa-eye"></i> View
-                            </button>
-                        </a>
-                        <a href="{{ route('tasks.edit', $child->id) }}" class="btn btn-primary btn-sm">
-                            <i class="fas fa-edit"></i> Edit
-                        </a>
-                        <a href="#">
-                        <button class="btn btn-danger btn-sm delete-btn"
-                        data-id="{{ $task->id }}"
-                        data-name="{{ $task->name }}">
-                        <i class="fas fa-trash"></i>
-                    </button>
+                    <div class="dropdown">
+                        <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" href="{{ route('tasks.showOneTask', ['id' => $child->id]) }}">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ route('tasks.edit', $child->id) }}">
+                                    <i class="fas fa-edit"></i> Edit
+                                </a>
+                            </li>
+                            <li>
+                                <button class="dropdown-item text-danger delete-btn" data-id="{{ $child->id }}" data-name="{{ $child->name }}">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                </td>
 
-
-                        </a>
-
-                    </td>
                 </tr>
             @endforeach
         @endforeach

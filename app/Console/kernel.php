@@ -4,6 +4,7 @@ namespace App\Console;
 
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -16,7 +17,18 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // Run the command every minute to check for task alerts
-        $schedule->command('tasks:check-alerts')->everyMinute();
+        Log::info("Here");
+        //$schedule->command('tasks:check-alerts')->everyMinute();
+        $schedule->command('tasks:send-alerts')
+         ->everyMinute()
+         ->withoutOverlapping()
+         ->before(function () {
+             Log::info('SendTaskAlerts is about to run.');
+         })
+         ->after(function () {
+             Log::info('SendTaskAlerts has finished.');
+         });
+
     }
 
     /**
