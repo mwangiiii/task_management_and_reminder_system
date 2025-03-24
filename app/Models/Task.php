@@ -34,6 +34,7 @@ class Task extends Model
         'start_date' => 'datetime',
         'due_date' => 'datetime',
     ];
+    
 
     public function alert(){
         return $this->hasMany(Alert::class);

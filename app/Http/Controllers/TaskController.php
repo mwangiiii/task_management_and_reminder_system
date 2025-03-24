@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Mail\TaskDeletedMail;
 use App\Mail\TaskRestoredMail;
 use App\Models\Priority;
-
+use Illuminate\Support\Facades\Cache;
 use App\Services\NovuService;
 use Carbon\Carbon;
 // use App\Jobs\SendTaskAlertNotification;
@@ -38,7 +38,8 @@ class TaskController extends Controller
     
         $categories = Category::all();
         $recurrencies = Recurrency::all();
-        $tasks = Task::where('deleted', 0)->get();
+        $user_id = auth()->id();
+        $tasks = Task::where('user_id',$user_id)->where('deleted',0)->get();
     
         return view('Task.task-form', compact(
             'categories', 
@@ -51,14 +52,7 @@ class TaskController extends Controller
     
 
     public function viewAllTasks()
-    { 
-        //listing all non-deleted tasks by all users
-        $tasks = Task::where('deleted', 0)->get();
-        $recurrencies = Recurrency::all();
-        $completionStatus = CompletionStatus::all();
-        $categories = Category::all();
-        
-        return view('Task.all-tasks-listing', compact('categories', 'completionStatus', 'recurrencies', 'tasks'));
+    { return $this->returnTaskListing();
     }
     
     public function store(Request $request)
@@ -187,14 +181,10 @@ class TaskController extends Controller
     
         // If the request was AJAX/JSON, return JSON response
         if ($request->expectsJson()) {
-            return response()->json(['message' => 'Task created successfully!', 'task' => $task], 201);
+            return $this->returnTaskListing();
         }
     
-        // Otherwise return a redirect with success message
-        return response()->json([
-            'id' => $task->id, // Ensure 'id' is included
-            'message' => 'Task created successfully!'
-        ]);
+        return $this->returnTaskListing();
         
 
 
@@ -792,13 +782,7 @@ public function filterTasks(Request $request)
         }
     }
 
-    // Fetch additional data for the view
-    $categories = Category::all();
-    $recurrencies = Recurrency::all();
-
-    return view('Task.all-tasks-listing', compact(
-        'categories', 'completionStatus', 'recurrencies', 'tasks'
-    ));
+    return $this->returnTaskListing();
 }
 
 
@@ -997,12 +981,7 @@ public function startTask($id)
 public function startTaskNow(Task $task) {
     $task->update(['start_date' => now()]);
     Log::info($task);
-    $tasks = Task::where('deleted', 0)->get();
-        $recurrencies = Recurrency::all();
-        $completionStatus = CompletionStatus::all();
-        $categories = Category::all();
-        
-        return view('Task.all-tasks-listing', compact('categories', 'completionStatus', 'recurrencies', 'tasks'))->with('success', 'Task has been started!');
+    return $this->returnTaskListing();
 }
 
 public function extendTask(Task $task) {
@@ -1016,13 +995,152 @@ public function updateDueDate(Request $request, Task $task) {
     $newDueDate = Carbon::parse($request->input('new_due_date'));
     $task->update(['due_date' => $newDueDate]);
 
-    $tasks = Task::where('deleted', 0)->get();
-        $recurrencies = Recurrency::all();
-        $completionStatus = CompletionStatus::all();
-        $categories = Category::all();
-        
-        return view('Task.all-tasks-listing', compact('categories', 'completionStatus', 'recurrencies', 'tasks'))->with('success', 'Task due date has been updated succesfully!');
+    return $this->returnTaskListing();
 }
+public function recreateTask($id)
+{      // $lastRequest = Cache::get('task_recreate_' . $id);
+
+    // if ($lastRequest && now()->diffInSeconds($lastRequest) < 10) {
+    //     return $this->returnTaskListing();
+    // }
+
+    // Cache::put('task_recreate_' . $id, now(), 10); 
+    
+    if (session('task_recreated') === $id) {
+        return $this->returnTaskListing();
+    }
+    
+    session(['task_recreated' => $id]);
+
+    Log::info('Received request:', ['id' => $id]);
+
+    $task = Task::with('childTasks')->find($id);
+
+    if (!$task) {
+        Log::error('Task not found with ID:', ['id' => $id]);
+        return $this->returnTaskListing();
+    }
+
+    $newTask = $task->replicate();
+    $newTask->setAttribute('parent_task_id', null);
+
+    if ($task->recurrency_id) {
+        $recurrency = Recurrency::find($task->recurrency_id);
+        Log::info('Received frequency:', [
+            'recurrency_id' => $task->recurrency_id,
+            'recurrency' => $recurrency ? $recurrency->name : 'null'
+        ]);
+        
+        if ($recurrency) {
+            switch (strtolower($recurrency->frequency)) { 
+                case 'hourly':
+                    $newTask->start_date = Carbon::parse($task->start_date)->addHour();
+                    $newTask->due_date = Carbon::parse($task->due_date)->addHour();
+                    break;
+                case 'daily':
+                    $newTask->start_date = Carbon::parse($task->start_date)->addDay();
+                    $newTask->due_date = Carbon::parse($task->due_date)->addDay();
+                    break;
+                case 'weekly':
+                    $newTask->start_date = Carbon::parse($task->start_date)->addWeek();
+                    $newTask->due_date = Carbon::parse($task->due_date)->addWeek();
+                    break;
+                case 'monthly':
+                    $newTask->start_date = Carbon::parse($task->start_date)->addMonth();
+                    $newTask->due_date = Carbon::parse($task->due_date)->addMonth();
+                    break;
+                case 'yearly':
+                    $newTask->start_date = Carbon::parse($task->start_date)->addYear();
+                    $newTask->due_date = Carbon::parse($task->due_date)->addYear();
+                    break;
+                default:
+                    Log::warning('Unknown recurrency type:', ['recurrency' => $recurrency->frequency]);
+                    break;
+            }
+        }
+    }
+
+    $newTask->save();
+
+    $this->cloneChildren($task, $newTask);
+
+    return $this->returnTaskListing();
+}
+
+private function returnTaskListing()
+{   $user_id = auth()->id();
+    $tasks = Task::where('user_id',$user_id)->where('deleted',0)
+                 ->whereNull('parent_task_id') 
+                 ->get();
+
+    $recurrencies = Recurrency::all();
+    $completionStatus = CompletionStatus::all();
+    $categories = Category::all();
+
+    return view('Task.all-tasks-listing', compact('categories', 'completionStatus', 'recurrencies', 'tasks'));
+}
+
+
+
+
+private function cloneChildren($originalTask, $newParentTask)
+{
+    if ($originalTask->childTasks->isEmpty()) {
+        return; 
+    }
+
+    foreach ($originalTask->childTasks as $child) {
+        $newChild = $child->replicate();
+        $newChild->id = null;
+        $newChild->parent_task_id = $newParentTask->id;
+        if ($newParentTask->recurrency_id) {
+            $recurrency = Recurrency::find($newParentTask->recurrency_id);
+            if ($recurrency) {
+                switch (strtolower($recurrency->frequency)) {
+                    case 'hourly':
+                        $newChild->start_date = Carbon::parse($child->start_date)->addHour();
+                        $newChild->due_date = Carbon::parse($child->due_date)->addHour();
+                        break;
+                    case 'daily':
+                        $newChild->start_date = Carbon::parse($child->start_date)->addDay();
+                        $newChild->due_date = Carbon::parse($child->due_date)->addDay();
+                        break;
+                    case 'weekly':
+                        $newChild->start_date = Carbon::parse($child->start_date)->addWeek();
+                        $newChild->due_date = Carbon::parse($child->due_date)->addWeek();
+                        break;
+                    case 'monthly':
+                        $newChild->start_date = Carbon::parse($child->start_date)->addMonth();
+                        $newChild->due_date = Carbon::parse($child->due_date)->addMonth();
+                        break;
+                    case 'yearly':
+                        $newChild->start_date = Carbon::parse($child->start_date)->addYear();
+                        $newChild->due_date = Carbon::parse($child->due_date)->addYear();
+                        break;
+                    default:
+                        Log::warning('Unknown recurrency type for child task:', ['recurrency' => $recurrency->frequency]);
+                        break;
+                }
+            }
+        }
+
+        $newChild->save();
+        if ($child->childTasks->count() > 0) {
+            $this->cloneChildren($child, $newChild);
+        }
+    }
+}
+
+
+
+
+public function declineTask(Request $request)
+{   if(!auth()->check()){
+    return view('welcome');
+}
+    return $this->returnTaskListing();
+}
+
 
 
 

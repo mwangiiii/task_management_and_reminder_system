@@ -28,6 +28,13 @@
             <a href="{{ route('creating-form') }}" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Add Task
             </a>
+            <form action="{{ route('logout') }}" method="POST">
+    @csrf
+    <button type="submit" style="background-color: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer;">
+        Logout
+    </button>
+</form>
+
 
         </div>
 

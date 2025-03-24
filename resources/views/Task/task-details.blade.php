@@ -23,7 +23,7 @@
         </tr>
         <tr>
             <th>Cost</th>
-            <td>${{ number_format($task->cost, 2) }}</td>
+            <td>{{$task->currency}}  {{ number_format($task->cost, 2) }}</td>
         </tr>
         <tr>
             <th>Category</th>

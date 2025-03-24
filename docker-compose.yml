@@ -1,0 +1,90 @@
+services:
+  laravel-app-1:
+    build: .
+    container_name: laravel-instance-1
+    volumes:
+      - .:/var/www
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      DB_CONNECTION: mysql
+      DB_HOST: mysql-db
+      DB_PORT: 3306
+      DB_DATABASE: new
+      DB_USERNAME: user
+      DB_PASSWORD: rootpassword
+      MAIL_MAILER: smtp
+      MAIL_HOST: smtp.gmail.com
+      MAIL_PORT: 587
+      MAIL_USERNAME: erastuseven@gmail.com
+      MAIL_PASSWORD: "xaay zssi rexl bogr"
+      MAIL_ENCRYPTION: tls
+      MAIL_FROM_ADDRESS: erastuseven@gmail.com
+      MAIL_FROM_NAME: "Task Management"
+
+  laravel-app-2:
+    build: .
+    container_name: laravel-instance-2
+    volumes:
+      - .:/var/www
+    ports:
+      - "8001:8001"
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      DB_CONNECTION: mysql
+      DB_HOST: mysql-db
+      DB_PORT: 3306
+      DB_DATABASE: new
+      DB_USERNAME: user
+      DB_PASSWORD: rootpassword
+
+  laravel-app-3:
+    build: .
+    container_name: laravel-instance-3
+    volumes:
+      - .:/var/www
+    ports:
+      - "8002:8002"
+    depends_on:
+      - mysql
+      - redis
+    environment:
+      APP_ENV: local
+      APP_DEBUG: true
+      DB_CONNECTION: mysql
+      DB_HOST: mysql-db
+      DB_PORT: 3306
+      DB_DATABASE: new
+      DB_USERNAME: user
+      DB_PASSWORD: rootpassword
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      MYSQL_DATABASE: new
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  redis:
+    image: redis:latest
+    container_name: redis-cache
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  db_data:

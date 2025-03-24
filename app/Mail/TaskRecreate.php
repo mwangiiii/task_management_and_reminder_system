@@ -8,7 +8,7 @@ use Illuminate\Mail\Mailable;
 use Illuminate\Queue\SerializesModels;
 use App\Models\Task;
 
-class TaskAlert extends Mailable
+class TaskRecreate extends Mailable
 {
     use Queueable, SerializesModels;
 
@@ -21,10 +21,11 @@ class TaskAlert extends Mailable
 
     public function build()
     {
-        return $this->from(env('MAIL_FROM_ADDRESS'), 'Task Alert')
-                    ->subject('Task Reminder: ' . $this->task->name)
-                    ->view('emails.task_alert')
-                    ->with(['task' => $this->task]);
+        return $this->from(env('MAIL_FROM_ADDRESS'), 'Task Recreate')
+            ->subject(($this->task->recurrency?->frequency ?? 'N/A') . ' Task Recreation Reminder ')
+            ->view('emails.task_recreate')
+            ->with(['task' => $this->task]);
+    
     }
 }
 

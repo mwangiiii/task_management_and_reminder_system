@@ -774,7 +774,7 @@
                                 @endphp
                                 <span class="task-status {{ $statusClass }}">{{ $status }}</span>
                             </td>
-                            <td>${{ number_format($childTask->budget, 2) }} / ${{ number_format($childTask->cost, 2) }}</td>
+                            <td>{{$task->currency}}  {{ number_format($childTask->budget, 2) }} / {{$task->currency}}  {{ number_format($childTask->cost, 2) }}</td>
                             <td>{{ \Carbon\Carbon::parse($childTask->due_date)->format('M d, Y') }}</td>
                             <td class="actions">
                                 <a href="{{ route('tasks.showOneTask', ['id' => $childTask->id]) }}">
@@ -803,7 +803,7 @@
                                         @endphp
                                         <span class="task-status {{ $statusClass }}">{{ $status }}</span>
                                     </td>
-                                    <td>${{ number_format($subTask->budget, 2) }} / ${{ number_format($subTask->cost, 2) }}</td>
+                                    <td>{{$task->currency}}  {{ number_format($subTask->budget, 2) }} / {{$task->currency}}  {{ number_format($subTask->cost, 2) }}</td>
                                     <td>{{ \Carbon\Carbon::parse($subTask->due_date)->format('M d, Y') }}</td>
                                     <td class="actions">
                                         <a href="{{ route('tasks.showOneTask', ['id' => $subTask->id]) }}">
